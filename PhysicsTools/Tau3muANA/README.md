@@ -1,7 +1,3 @@
-Here is a professional and clear `README.md` for your framework.
-
----
-
 # HF Tau3Mu Analysis Framework
 
 This framework is designed for analyzing customized **NANOAOD ntuples** for Heavy Flavor (HF) studies, specifically targeting the $B \to \tau(\to 3\mu)\nu$ and $D_s \to \phi(\to \mu\mu)\pi$ channels.
