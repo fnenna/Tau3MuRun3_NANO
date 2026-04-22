@@ -3,7 +3,7 @@ from PhysicsTools.NanoAOD.common_cff import *
 from PhysicsTools.NanoAOD.simpleGenParticleFlatTableProducer_cfi import simpleGenParticleFlatTableProducer
 from PhysicsTools.NanoAOD.muons_cff import muonTable
 # --- 0. CONTROL PARAMETERS ---
-isMC = False 
+isMC = True 
 HLT_path_list = cms.vstring(
         "HLT_DoubleMu3_Trk_Tau3mu", 
         "HLT_DoubleMu3_TkMu_DsTau3Mu_v", 
@@ -247,8 +247,10 @@ TrgMatchMuonTable = cms.EDProducer("SimplePATMuonFlatTableProducer",
         trgDR        = Var("userFloat('trgDR')", float),
         trgDPT       = Var("userFloat('trgDPT')", float),
         genPartPdgId = Var("userInt('mcMatch')" if isMC else "0", int),
+        decayType = Var("userInt('genOrigin')" if isMC else "0", int, doc = "0 if non matching, 1=Ds, 2=B, 3=Other"),
         
         # --- Isolation (Standard) ---
+        # Queste funzionano quasi sempre perché calcolate dai depositi nel rivelatore
         pfRelIso03_all = Var("(pfIsolationR03().sumChargedHadronPt + max(pfIsolationR03().sumNeutralHadronEt + pfIsolationR03().sumPhotonEt - pfIsolationR03().sumPUPt/2,0.0))/pt", float),
         pfRelIso04_all = Var("(pfIsolationR04().sumChargedHadronPt + max(pfIsolationR04().sumNeutralHadronEt + pfIsolationR04().sumPhotonEt - pfIsolationR04().sumPUPt/2,0.0))/pt", float),
         

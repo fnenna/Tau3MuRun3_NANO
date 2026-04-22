@@ -17,6 +17,52 @@
 #include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
 #include "helper.h"
 
+namespace {
+  int getGenOrigin(const reco::GenParticleRef& gen) {
+    if (gen.isNull()) return 0; // Nessun match a livello Gen
+
+    const reco::Candidate* mother = gen->mother();
+    bool foundPhi = false;
+    bool foundDs = false;
+    bool foundB = false;
+
+    while (mother != nullptr) {
+        int pdg = std::abs(mother->pdgId());
+        
+        // 1. Cerchiamo la Phi (333)
+        if (pdg == 333) {
+            foundPhi = true;
+        }
+
+        // 2. Cerchiamo la Ds (431)
+        if (pdg == 431) {
+            foundDs = true;
+        }
+
+        // 3. Cerchiamo un adrone B (5xx)
+        if ((pdg / 100) == 5 || (pdg / 1000) == 5) {
+            foundB = true;
+            // Se troviamo un B, non serve risalire oltre nella gerarchia
+            break; 
+        }
+
+        mother = mother->mother();
+    }
+
+    // --- Logica di classificazione finale ---
+    
+    // Se NON è passato per una Phi, è automaticamente "Other" (3)
+    if (!foundPhi) return 3;
+
+    // Se è passato per una Phi, controlliamo la provenienza della Phi:
+    if (foundB) return 2;  // Non-Prompt (B -> ... -> Phi -> mu)
+    if (foundDs) return 1; // Prompt (Ds -> Phi -> mu)
+
+    // Phi prodotta in altri modi (es. frammentazione o decadimenti di adroni leggeri)
+    return 3; 
+  }
+}
+
 template <typename PATOBJ>
 class MatchEmbedder : public edm::global::EDProducer<> {
   // perhaps we need better structure here (begin run etc)
@@ -58,6 +104,7 @@ void MatchEmbedder<PATOBJ>::produce(edm::StreamID, edm::Event &evt, edm::EventSe
     reco::GenParticleRef match = (*matching)[ptr];
     out->emplace_back(src->at(i));
     out->back().addUserInt("mcMatch", match.isNonnull() ? match->pdgId() : 0);
+    out->back().addUserInt("genOrigin", getGenOrigin(match));
   }
 
   // adding label to be consistent with the muon and track naming
