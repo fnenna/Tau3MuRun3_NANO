@@ -49,7 +49,7 @@ python3 tau3mu_analysis_runner.py -e <era> -s <stream> -t <type> -o <output_dir>
 | Flag | Description | Examples |
 | :--- | :--- | :--- |
 | `-e` | Data-taking Era | `B`, `C`, `D` |
-| `-s` | Trigger Stream | `ParkingDoubleMuonLowMass`, `ParkingLLP` |
+| `-s` | Data-taking Stream | `0`, `1`, `2`, ... |
 | `-t` | Analysis Type | `data_signal`, `data_control`, `MC` |
 | `-o` | Output Directory | `output_v1`, `test_results` |
 | `-w` | Number of Workers | `4`, `8`, `16` (Dask parallelization) |
