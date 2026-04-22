@@ -12,8 +12,30 @@
 #include "PhysicsTools/Tau3muNANO/interface/PVRefitter.h"
 #include "RecoVertex/VertexTools/interface/VertexDistance3D.h"
 #include "RecoVertex/VertexTools/interface/VertexDistanceXY.h"
-#include "DataFormats/Math/interface/deltaR.h"
+#include "TrackingTools/IPTools/interface/IPTools.h"
+#include "DataFormats/MuonReco/interface/MuonSelectors.h"
 #include "TVector3.h"
+#include "TMath.h"
+
+// --- Supporto per Matching Muoni ---
+#include "DataFormats/MuonReco/interface/MuonChamberMatch.h"
+#include "DataFormats/MuonReco/interface/MuonSegmentMatch.h"
+
+namespace {
+    typedef std::pair<const reco::MuonChamberMatch*, const reco::MuonSegmentMatch*> MatchPair;
+
+    MatchPair getBetterMatch(const MatchPair& match1, const MatchPair& match2) {
+        if (match2.first->detector() == MuonSubdetId::DT and
+            match1.first->detector() != MuonSubdetId::DT)
+            return match2;
+
+        if (std::abs(match1.first->x - match1.second->x) >
+            std::abs(match2.first->x - match2.second->x) )
+            return match2;
+            
+        return match1;
+    }
+}
 
 class Tau2Mu1TrkBuilder : public edm::global::EDProducer<> {
 public:
@@ -43,95 +65,72 @@ public:
         auto ret_val = std::make_unique<pat::CompositeCandidateCollection>();
         PVRefitter pvRefitter;
 
-        // --- Contatori per il Breakdown ---
-        int n_initial_comb = 0;
-        int n_fail_tt3 = 0;
-        int n_fail_dR = 0;
-        int n_fail_eta_collinear = 0;
-        int n_fail_dimuon_mass = 0;
-        int n_fail_triplet_mass = 0;
-        int n_fail_charge = 0;
-        int n_fail_track_details = 0;
-        int n_fail_sv_fit = 0;
-        int n_fail_sv_ndof = 0;
-        int n_fail_no_valid_pv = 0;
-        int n_saved = 0;
-
         for (size_t i = 0; i < muons->size(); ++i) {
             for (size_t j = i + 1; j < muons->size(); ++j) {
                 for (size_t k = 0; k < tracks->size(); ++k) {
-                    n_initial_comb++;
                     
+                    pat::CompositeCandidate cand;
                     const pat::Muon &m1 = muons->at(i), &m2 = muons->at(j);
                     const pat::PackedCandidate &tr = tracks->at(k);
-
-                    // 1. Transient Track check
-                    auto tt3 = ttb.build(tr.pseudoTrack());
-                    if (!tt3.isValid()) { n_fail_tt3++; continue; }
-
-                    // 2. Overlap dR
+                    auto dimu_p4 = m1.p4() + m2.p4();
                     double dR_13 = reco::deltaR(m1, tr);
                     double dR_23 = reco::deltaR(m2, tr);
                     double dR_12 = reco::deltaR(m1, m2);
-                    if(dR_13 < 0.01 || dR_23 < 0.01 || dR_12 < 0.01) { n_fail_dR++; continue; }
+                    if(dR_13 < 0.01 || dR_23 < 0.01 || dR_12 < 0.01) { continue; }
 
-                    // 3. Eta Collinearity (il taglio infinitesimale che avevamo discusso)
-                    if (std::abs(m1.eta() - tr.eta()) < 1e-6 || 
-                        std::abs(m2.eta() - tr.eta()) < 1e-6 || 
-                        std::abs(m1.eta() - m2.eta()) < 1e-6) {
-                        n_fail_eta_collinear++;
-                        continue;
-                    }
-
-                    // 4. DiMuon Mass Cut (Replica del pre-filtro Python)
-                    auto dimu_p4 = m1.p4() + m2.p4();
-
+                    if (std::abs(m1.eta() - tr.eta()) < 1e-6 ||
+                        std::abs(m2.eta() - tr.eta()) < 1e-6 ||
+                        std::abs(m1.eta() - m2.eta()) < 1e-6) continue;
                     // 5. Triplet Raw Mass
                     auto p4_raw = dimu_p4 + tr.p4();
-                    if (p4_raw.mass() <= 0.8 || p4_raw.mass() >= 3.0) { n_fail_triplet_mass++; continue; }
+                    if (p4_raw.mass() <= 0.8 || p4_raw.mass() >= 3.0) continue;
 
-                    // 6. Charge & Track details
-                    if (std::abs(m1.charge() + m2.charge()) != 0) { n_fail_charge++; continue; }
-                    if (std::abs(m1.charge() + m2.charge() + tr.charge()) != 1) { n_fail_charge++; continue; }
-                    if (m1.innerTrack().isNull() || m2.innerTrack().isNull() || !tr.hasTrackDetails()) { n_fail_track_details++; continue; }
-
-                    // 7. SV Fit
-                    std::vector<reco::TransientTrack> tt = {
+                    if (m1.innerTrack().isNull() || m2.innerTrack().isNull() || !tr.hasTrackDetails()) continue;
+                    if (std::abs(m1.charge() + m2.charge()) != 0) continue;
+                    if (std::abs(m1.charge() + m2.charge() + tr.charge()) != 1) continue;
+                    auto tt3 = ttb.build(tr.pseudoTrack());
+                    if (!tt3.isValid()) { continue; }
+                    // Building TTracks
+                    std::vector<reco::TransientTrack> muTTracks = {
                         ttb.build(m1.innerTrack()), 
                         ttb.build(m2.innerTrack()), 
                         ttb.build(tr.pseudoTrack())
                     };
+
                     KalmanVertexFitter svFitter(true);
-                    TransientVertex sv = svFitter.vertex(tt);
+                    TransientVertex sv = svFitter.vertex(muTTracks);
 
-                    //if (!sv.isValid() || !sv.hasRefittedTracks() || sv.totalChiSquared() <= 0) { n_fail_sv_fit++; continue; }
-                    if (!sv.isValid()) { n_fail_sv_fit++; continue; }
-                    if (sv.refittedTracks().size() <= 2) { n_fail_sv_ndof++; continue; }
+                    // --- Logica Fallimento Fit (Uniformata al Tau3Mu) ---
+                    if (!sv.isValid() || !sv.hasRefittedTracks()) {
+                        //fillDummyCandidate(cand, i, j, k, m1, m2, tr);
+                        //ret_val->push_back(cand);
+                        continue;
+                    }
 
-                    // --- Calcolo cinematica refittata ---
+                    // --- Refitted Kinematics ---
                     reco::Candidate::LorentzVector p4_ref(0,0,0,0);
+                    std::vector<double> refit_pts;
                     int idx_rt = 0;
                     for(const auto& rt : sv.refittedTracks()) {
-                        double mass_sq = (idx_rt < 2) ? 0.0111636 : 0.019479; 
+                        double mass_sq = (idx_rt < 2) ? 0.0111636 : 0.019479; // Muon mass vs Pion mass
                         p4_ref += reco::Candidate::LorentzVector(rt.track().px(), rt.track().py(), rt.track().pz(), std::sqrt(rt.track().p2() + mass_sq));
+                        refit_pts.push_back(rt.track().pt());
                         idx_rt++;
                     }
 
-                    // 8. PV Selection & Refit
+                    // --- PV Selection ---
                     std::vector<int> validVtxIndices;
                     for (const auto& pfc : *candidates) {
                         if (pfc.charge() == 0 || pfc.vertexRef().isNull() || !pfc.hasTrackDetails()) continue;
                         int fromPV = pfc.fromPV(pfc.vertexRef().key());
                         if (fromPV < 2) continue;
-                        if (fromPV==2 && pfc.pvAssociationQuality()!= pat::PackedCandidate::UsedInFitLoose ) continue;
+                        if (fromPV == 2 && pfc.pvAssociationQuality() != pat::PackedCandidate::UsedInFitLoose) continue;
                         validVtxIndices.push_back(pfc.vertexRef().key());
                     }
                     std::sort(validVtxIndices.begin(), validVtxIndices.end());
                     validVtxIndices.erase(std::unique(validVtxIndices.begin(), validVtxIndices.end()), validVtxIndices.end());
 
-                    if (validVtxIndices.empty() || vertices->empty()) { n_fail_no_valid_pv++; continue; }
-
-                    int b_idx = -1; double maxCos = -1.0;
+                    uint b_idx = -1; double maxCos = -1.0;
                     TVector3 svP(sv.position().x(), sv.position().y(), sv.position().z());
                     TVector3 pT(p4_ref.px(), p4_ref.py(), p4_ref.pz());
 
@@ -142,111 +141,243 @@ public:
                         if (c > maxCos) { maxCos = c; b_idx = v; }
                     }
 
-                    pat::CompositeCandidate cand;
-                    [[maybe_unused]] bool goodPV = false;
-                    //reco::Vertex cleanPV;
+                    if (b_idx == (uint)-1) continue; 
+                    const reco::Vertex& bestPV = vertices->at(b_idx);
 
-                    if (b_idx == -1) continue;
                     std::vector<reco::TransientTrack> pvTTracks;
-                    for (const auto& pfc : *candidates) {
-                        if (pfc.charge() == 0 || !pfc.hasTrackDetails() || pfc.vertexRef().isNull()) continue;
-                        if (pfc.vertexRef().key() != (size_t)b_idx) continue;
-                        int fromPV = pfc.fromPV(pfc.vertexRef().key());
+                    for (const auto& c : *candidates) {
+                        if (c.charge() == 0 || !c.hasTrackDetails() || c.vertexRef().isNull() || c.vertexRef().key() != b_idx) continue;
+                        int fromPV = c.fromPV(c.vertexRef().key());
                         if (fromPV < 2) continue;
-                        if (fromPV == 2 && pfc.pvAssociationQuality() != pat::PackedCandidate::UsedInFitLoose) continue;
-                        
-                        auto pv_tt = ttb.build(pfc.pseudoTrack());
-                        if (pv_tt.isValid()) pvTTracks.push_back(pv_tt);
+                        if (fromPV == 2 && c.pvAssociationQuality() != pat::PackedCandidate::UsedInFitLoose) continue;
+                        pvTTracks.push_back(ttb.build(c.pseudoTrack()));
                     }
 
-                    //cleanPV = pvRefitter.refit(tt, vertices->at(b_idx), pvTTracks);
-                    auto [cleanPV, pvStatus] = pvRefitter.refit(tt, vertices->at(b_idx), pvTTracks);
-                    if (cleanPV.isValid() && pvStatus == 1) goodPV = true;
-                    else { n_fail_no_valid_pv++; continue; } // Silent drop del WF1
+                    auto [cleanPV, pvStatus] = pvRefitter.refit(muTTracks, bestPV, pvTTracks);
+                    if (!(cleanPV.isValid() && pvStatus == 1)) continue;
 
-                    // --- 1. 3D Flight Distance (PVSV) ---
-                    VertexDistance3D dist3D;
+                    // --- Displacement & Geometry ---
+                    VertexDistanceXY distXY; VertexDistance3D dist3D;
+                    auto d2d = distXY.distance(sv, cleanPV);
                     auto d3d = dist3D.distance(sv, cleanPV);
+                    
+                    reco::Vertex::Point bsP(beamSpot->x0(), beamSpot->y0(), beamSpot->z0());
+                    reco::Vertex bsVertex(bsP, beamSpot->covariance3D());
+                    auto dBS = distXY.distance(sv, bsVertex);
 
-                    double flightDist    = d3d.value();
-                    double flightDistErr = d3d.error();
-                    double flightDistSig = d3d.significance();
+                    // Pointing Angle
+                    GlobalVector flightDir(sv.position().x() - cleanPV.x(), sv.position().y() - cleanPV.y(), sv.position().z() - cleanPV.z());
+                    GlobalVector momentum(p4_ref.px(), p4_ref.py(), p4_ref.pz());
+                    double cosPointingAngle = 0;
+                    if (flightDir.mag2() > 0 && momentum.mag2() > 0) {
+                        cosPointingAngle = flightDir.unit().dot(momentum.unit());
+                    }
 
-                    // --- 2. Transverse distance (XY) ---
-                    VertexDistanceXY Vert_distXY;
-                    auto d2d = Vert_distXY.distance(sv, cleanPV);
+                    // Clipping di sicurezza per std::acos
+                    cosPointingAngle = std::max(-1.0, std::min(1.0, cosPointingAngle));
+                    double pointingAngle = std::acos(cosPointingAngle);
+                    // Isolation & DCA
+                    float sum_pt_iso = 0; float min_dca = 999.;
+                    for (const auto& track : *candidates) {
+                        if (track.charge() == 0 || track.pt() < 0.5 || !track.hasTrackDetails()) continue;
+                        float dr = reco::deltaR(track, p4_ref);
+                        if (reco::deltaR(track, m1) < 0.005 || reco::deltaR(track, m2) < 0.005 || reco::deltaR(track, tr) < 0.005) continue;
+                        if (dr < 0.3) sum_pt_iso += track.pt();
+                        reco::TransientTrack ttIso = ttb.build(track.pseudoTrack());
+                        if (ttIso.isValid()) {
+                            auto pca = ttIso.trajectoryStateClosestToPoint(sv.position());
+                            if (pca.isValid()) min_dca = std::min(min_dca, (float)(pca.position() - sv.position()).mag());
+                        }
+                    }
 
-                    double distXY    = d2d.value();
-                    double distXYErr = d2d.error();
-                    double distXYSig = d2d.significance();
-
-                    // --- 3. BeamSpot distance (XY) ---
-                    reco::Vertex::Point bsPoint(beamSpot->x0(), beamSpot->y0(), beamSpot->z0());
-                    reco::Vertex::Error bsError = beamSpot->covariance3D();
-                    reco::Vertex bsVertex(bsPoint, bsError);
-
-                    auto dBS = Vert_distXY.distance(sv, bsVertex);
-
-                    double flightDistBS    = dBS.value();
-                    double flightDistBSErr = dBS.error();
-                    double flightDistBSSig = dBS.significance();
-                    // --- Fill the Candidate ---
+                    // --- Fill Candidate ---
                     cand.setP4(p4_ref);
                     cand.setCharge(m1.charge() + m2.charge() + tr.charge());
+                    cand.setVertex(reco::Candidate::Point(sv.position().x(), sv.position().y(), sv.position().z()));
 
-                    // Kinematics & Basic
+                    cand.addUserInt("mu1_idx", i); cand.addUserInt("mu2_idx", j); cand.addUserInt("tr_idx", k);
+                    cand.addUserFloat("mu1_pt",  m1.pt());
+                    cand.addUserFloat("mu1_eta", m1.eta());
+                    cand.addUserFloat("mu1_phi", m1.phi());
+                    cand.addUserFloat("mu1_charge", m1.charge());
+
+                    cand.addUserFloat("mu2_pt",  m2.pt());
+                    cand.addUserFloat("mu2_eta", m2.eta());
+                    cand.addUserFloat("mu2_phi", m2.phi());
+                    cand.addUserFloat("mu2_charge", m2.charge()); 
+                    
+                    cand.addUserFloat("tr_pt",  tr.pt());
+                    cand.addUserFloat("tr_eta", tr.eta());
+                    cand.addUserFloat("tr_phi", tr.phi());
+                    cand.addUserFloat("tr_charge", tr.charge());
+
                     cand.addUserFloat("sv_mass", p4_ref.M());
                     cand.addUserFloat("sv_prob", TMath::Prob(sv.totalChiSquared(), sv.degreesOfFreedom()));
                     cand.addUserFloat("sv_chi2", sv.totalChiSquared());
                     cand.addUserFloat("sv_ndof", sv.degreesOfFreedom());
-
-                    // Positions
+                    
                     cand.addUserFloat("sv_x", sv.position().x());
                     cand.addUserFloat("sv_y", sv.position().y());
                     cand.addUserFloat("sv_z", sv.position().z());
+                    // Refit & PV
+                    cand.addUserFloat("refit_mu1_pt", refit_pts[0]);
+                    cand.addUserFloat("refit_mu2_pt", refit_pts[1]);
+                    cand.addUserFloat("refit_tr_pt",  refit_pts[2]);
                     cand.addUserFloat("pv_x", cleanPV.x());
                     cand.addUserFloat("pv_y", cleanPV.y());
                     cand.addUserFloat("pv_z", cleanPV.z());
+                    cand.addUserFloat("pv_orig_x", bestPV.x()); 
+                    cand.addUserFloat("pv_orig_y", bestPV.y()); 
+                    cand.addUserFloat("pv_orig_z", bestPV.z());
 
-                    // Flight Distance
-                    cand.addUserFloat("flightDist", flightDist);
-                    cand.addUserFloat("flightDistErr", flightDistErr);
-                    cand.addUserFloat("flightDistSig", flightDist / flightDistErr);
-                    cand.addUserFloat("distXY", distXY);
-                    cand.addUserFloat("distXYSig", distXY / distXYErr);
-                    cand.addUserFloat("flightDistBS", flightDistBS);
-
-                    // Refitted Tracks
-                    cand.addUserFloat("refit_mu1_pt", sv.refittedTracks()[0].track().pt());
-                    cand.addUserFloat("refit_mu2_pt", sv.refittedTracks()[1].track().pt());
-                    cand.addUserFloat("refit_tr_pt",  sv.refittedTracks()[2].track().pt());
-
-                    // Impact Parameters (DXY)
+                    // Displacement
+                    cand.addUserFloat("flightDist", d3d.value());
+                    cand.addUserFloat("flightDistSig", d3d.value() / d3d.error());
+                    cand.addUserFloat("lxy_pv", d2d.value());
+                    cand.addUserFloat("distXYSig", d2d.value() / d2d.error());
+                    cand.addUserFloat("flightDistBS", dBS.value());
+                    
+                    // Impact Parameters
                     cand.addUserFloat("dxy_mu1", m1.innerTrack()->dxy(cleanPV.position()));
                     cand.addUserFloat("dxy_mu2", m2.innerTrack()->dxy(cleanPV.position()));
                     cand.addUserFloat("dxy_tr",  tr.pseudoTrack().dxy(cleanPV.position()));
 
+                    // High Purity & Isolation
+                    cand.addUserInt("mu1_innerTrk_hp", m1.innerTrack()->quality(reco::TrackBase::highPurity));
+                    cand.addUserInt("mu2_innerTrk_hp", m2.innerTrack()->quality(reco::TrackBase::highPurity));
+                    cand.addUserInt("tr_innerTrk_hp",  tr.trackHighPurity());
+                    cand.addUserFloat("relative_iso", sum_pt_iso / p4_ref.pt());
+                    cand.addUserFloat("mindca_iso", min_dca);
+                    cand.addUserFloat("pointingAngle", pointingAngle);
+
+                    // Matching (Solo Muoni)
+                    fillMatchInfo(m1, cand, "mu1");
+                    fillMatchInfo(m2, cand, "mu2");
+
                     ret_val->push_back(cand);
-                    n_saved++;
                 }
             }
         }
-
-        // --- BREAKDOWN LOG PRINTING ---
-        std::cout << "\n==== EVENT BREAKDOWN (ID: " << evt.id().event() << ") ====" << std::endl;
-        std::cout << "1. Combinazioni Iniziali:   " << n_initial_comb << std::endl;
-        std::cout << "2. Fallite Traccia Builder: " << n_fail_tt3 << std::endl;
-        std::cout << "3. Fallite Overlap dR:      " << n_fail_dR << std::endl;
-        std::cout << "4. Fallite Eta Collineari:  " << n_fail_eta_collinear << std::endl;
-        std::cout << "5. Fallite Massa DiMuon:    " << n_fail_dimuon_mass << std::endl;
-        std::cout << "6. Fallite Massa Tripletto: " << n_fail_triplet_mass << std::endl;
-        std::cout << "7. Fallite Carica/Dettagli: " << n_fail_charge + n_fail_track_details << std::endl;
-        std::cout << "8. Fallite SV Fit/NDOF:     " << n_fail_sv_fit + n_fail_sv_ndof << std::endl;
-        std::cout << "9. Fallite PV (SilentDrop): " << n_fail_no_valid_pv << std::endl;
-        std::cout << "TOTAL SAVED:                " << n_saved << std::endl;
-        std::cout << "==========================================\n" << std::endl;
-
         evt.put(std::move(ret_val));
+    }
+
+    // Funzione helper per uniformare i rami di fallimento fit
+    void fillDummyCandidate(pat::CompositeCandidate& cand, int i, int j, int k, const pat::Muon& m1, const pat::Muon& m2, const pat::PackedCandidate& tr) const {
+        cand.addUserInt("mu1_idx", i); cand.addUserInt("mu2_idx", j); cand.addUserInt("tr_idx", k);
+        cand.setP4(reco::Candidate::LorentzVector(-99., -99., -99., -99.)); 
+        cand.setCharge(m1.charge() + m2.charge() + tr.charge());
+        cand.setVertex(reco::Candidate::Point(-99., -99., -99.));
+
+        
+        cand.addUserFloat("mu1_pt",  m1.pt());
+        cand.addUserFloat("mu1_eta", m1.eta());
+        cand.addUserFloat("mu1_phi", m1.phi());
+        cand.addUserFloat("mu1_charge", m1.charge());
+
+        cand.addUserFloat("mu2_pt",  m2.pt());
+        cand.addUserFloat("mu2_eta", m2.eta());
+        cand.addUserFloat("mu2_phi", m2.phi());
+        cand.addUserFloat("mu2_charge", m2.charge());
+
+        cand.addUserFloat("tr_pt",  tr.pt());
+        cand.addUserFloat("tr_eta", tr.eta());
+        cand.addUserFloat("tr_phi", tr.phi());
+        cand.addUserFloat("tr_charge", tr.charge());
+
+        // SV Quality & Mass
+        cand.addUserFloat("sv_mass", -99.);
+        cand.addUserFloat("sv_prob", -99.);
+        cand.addUserFloat("sv_chi2", -99.);
+        cand.addUserFloat("sv_ndof", -99.);
+
+
+        // Positions
+        cand.addUserFloat("sv_x", -99.);
+        cand.addUserFloat("sv_y", -99.);
+        cand.addUserFloat("sv_z", -99.);
+        cand.addUserFloat("pv_x", -99.);
+        cand.addUserFloat("pv_y", -99.);
+        cand.addUserFloat("pv_z", -99.);
+        cand.addUserFloat("pv_orig_x", -99.); 
+        cand.addUserFloat("pv_orig_y", -99.); 
+        cand.addUserFloat("pv_orig_z", -99.);
+
+        // SV Refitted Kinematics (Matching twomu1trk names)
+        cand.addUserFloat("refit_mu1_pt", -99.);
+        cand.addUserFloat("refit_mu2_pt", -99.);
+        cand.addUserFloat("refit_tr_pt",  -99.); // Name kept for consistency
+
+
+        // Displacement & Significance
+        cand.addUserFloat("flightDist", -99.);
+        cand.addUserFloat("flightDistErr", -99.);
+        cand.addUserFloat("flightDistSig", -99.);
+        cand.addUserFloat("lxy_pv", -99.); cand.addUserFloat("lxy_pv_err", -99.);
+        cand.addUserFloat("distXY", -99.);
+        cand.addUserFloat("distXYSig", -99.);
+        cand.addUserFloat("l3d_pv", -99.); cand.addUserFloat("l3d_pv_err", -99.);
+        cand.addUserFloat("flightDistBS", -99.);
+        cand.addUserFloat("lxy_bs", -99.); cand.addUserFloat("lxy_bs_err", -99.);
+        
+        // Impact Parameters
+        cand.addUserFloat("dxy_mu1", -99.);
+        cand.addUserFloat("dxy_mu2", -99.);
+        cand.addUserFloat("dxy_tr", -99.); // tr treated as 'track'
+        
+        cand.addUserFloat("cos_3d", -99.);
+        cand.addUserFloat("dr12", -99.); cand.addUserFloat("dr23", -99.); cand.addUserFloat("dr13", -99.);
+        cand.addUserFloat("dr_max", -99.);
+        cand.addUserFloat("dz12", -99.); cand.addUserFloat("dz23", -99.); cand.addUserFloat("dz13", -99.);
+        cand.addUserFloat("dz_max", -99.);
+        cand.addUserFloat("d0", -99.);
+        cand.addUserFloat("d0_sig", -99.);
+        cand.addUserFloat("d0max_sig", -99.);
+        cand.addUserFloat("relative_iso", -99.);
+        cand.addUserFloat("mindca_iso", -99.);
+
+        cand.addUserInt("mu1_innerTrk_hp", -99);
+        cand.addUserInt("mu2_innerTrk_hp", -99);
+        cand.addUserInt("tr_innerTrk_hp", -99);
+
+
+        for (int m = 1; m <= 2; ++m) {
+            for (int s = 1; s <= 2; ++s) {
+                std::string prefix = "mu" + std::to_string(m) + "_match" + std::to_string(s);
+                cand.addUserFloat(prefix + "_dX", -999.f);
+                cand.addUserFloat(prefix + "_pullX", -999.f);
+                cand.addUserFloat(prefix + "_dY", -999.f);
+                cand.addUserFloat(prefix + "_pullY", -999.f);
+                cand.addUserFloat(prefix + "_pullDxDz", -999.f);
+                cand.addUserFloat(prefix + "_pullDyDz", -999.f);
+            }
+        }
+
+        cand.addUserFloat("pointingAngle", -99);
+    }
+
+    void fillMatchInfo(const pat::Muon& muon, pat::CompositeCandidate& cand, std::string prefix) const {
+        const int n_stations = 2;
+        std::vector<MatchPair> matches(n_stations, {nullptr, nullptr});
+        for (const auto& cm : muon.matches()) {
+            int s = cm.station() - 1;
+            if (s < 0 || s >= n_stations) continue;
+            for (const auto& sm : cm.segmentMatches) {
+                if (!(sm.isMask(reco::MuonSegmentMatch::BestInStationByDR) && sm.isMask(reco::MuonSegmentMatch::BelongsToTrackByDR))) continue;
+                MatchPair curr(&cm, &sm);
+                matches[s] = (matches[s].first) ? getBetterMatch(matches[s], curr) : curr;
+            }
+        }
+        for (int s = 0; s < n_stations; ++s) {
+            std::string lbl = prefix + "_match" + std::to_string(s + 1);
+            if (matches[s].first && matches[s].second) {
+                float dX = matches[s].first->x - matches[s].second->x;
+                float errX = std::sqrt(std::pow(matches[s].first->xErr, 2) + std::pow(matches[s].second->xErr, 2));
+                cand.addUserFloat(lbl + "_dX", dX);
+                cand.addUserFloat(lbl + "_pullX", (errX > 0) ? dX / errX : -999.f);
+            } else {
+                cand.addUserFloat(lbl + "_dX", -999.f); cand.addUserFloat(lbl + "_pullX", -999.f);
+            }
+        }
     }
 
 private:

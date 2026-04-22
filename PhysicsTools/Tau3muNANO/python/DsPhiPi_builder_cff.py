@@ -139,42 +139,71 @@ tau2mu1trTable = cms.EDProducer("SimpleCompositeCandidateFlatTableProducer",
     src = cms.InputTag("tau2mu1trBuilder"),
     name = cms.string("Tau2MuTrk"),
     variables = cms.PSet(
-        # Standard P4
-        pt      = Var("pt", float),
-        eta     = Var("eta", float),
-        phi     = Var("phi", float),
-        charge  = Var("charge", int),
-        
-        # Vertex Info
-        mass    = Var("userFloat('sv_mass')", float, doc="Fitted invariant mass"),
-        prob    = Var("userFloat('sv_prob')", float, doc="SV fit probability"),
-        chi2    = Var("userFloat('sv_chi2')", float),
-        ndof    = Var("userFloat('sv_ndof')", float),
-        
-        # Vertex Positions
-        vx      = Var("userFloat('sv_x')", float),
-        vy      = Var("userFloat('sv_y')", float),
-        vz      = Var("userFloat('sv_z')", float),
-        pvx     = Var("userFloat('pv_x')", float),
-        pvy     = Var("userFloat('pv_y')", float),
-        pvz     = Var("userFloat('pv_z')", float),
-        
-        # Flight Distance & Displacement
-        flightDist    = Var("userFloat('flightDist')", float),
-        flightDistSig = Var("userFloat('flightDistSig')", float),
-        distXY        = Var("userFloat('distXY')", float),
-        distXYSig     = Var("userFloat('distXYSig')", float),
-        distBS        = Var("userFloat('flightDistBS')", float),
-        
-        # Refitted Kinematics
-        refit_mu1_pt = Var("userFloat('refit_mu1_pt')", float),
-        refit_mu2_pt = Var("userFloat('refit_mu2_pt')", float),
-        refit_tr_pt  = Var("userFloat('refit_tr_pt')", float),
-        
-        # Impact Parameters
-        dxy_mu1 = Var("userFloat('dxy_mu1')", float),
-        dxy_mu2 = Var("userFloat('dxy_mu2')", float),
-        dxy_tr  = Var("userFloat('dxy_tr')", float),
+    # Standard P4 del tripletto
+    pt      = Var("pt", float),
+    eta     = Var("eta", float),
+    phi     = Var("phi", float),
+    charge  = Var("charge", int),
+
+
+    # Indici originali
+    mu1_idx = Var("userInt('mu1_idx')", int),
+    mu2_idx = Var("userInt('mu2_idx')", int),
+    tr_idx  = Var("userInt('tr_idx')", int),
+    
+    # Vertex Info
+    mass    = Var("userFloat('sv_mass')", float, doc="Fitted invariant mass"),
+    prob    = Var("userFloat('sv_prob')", float, doc="SV fit probability"),
+    chi2    = Var("userFloat('sv_chi2')", float),
+    ndof    = Var("userFloat('sv_ndof')", float),
+    
+    # Vertex Positions
+    sv_x    = Var("userFloat('sv_x')", float),
+    sv_y    = Var("userFloat('sv_y')", float),
+    sv_z    = Var("userFloat('sv_z')", float),
+    pv_x    = Var("userFloat('pv_x')", float),
+    pv_y    = Var("userFloat('pv_y')", float),
+    pv_z    = Var("userFloat('pv_z')", float),
+    
+    # Flight Distance & Displacement
+    flightDist    = Var("userFloat('flightDist')", float),
+    flightDistSig = Var("userFloat('flightDistSig')", float),
+    lxy_pv        = Var("userFloat('lxy_pv')", float),
+    distXYSig     = Var("userFloat('distXYSig')", float),
+    distBS        = Var("userFloat('flightDistBS')", float),
+    
+    # Refitted Kinematics (al vertice SV)
+    refit_mu1_pt = Var("userFloat('refit_mu1_pt')", float),
+    refit_mu2_pt = Var("userFloat('refit_mu2_pt')", float),
+    refit_tr_pt  = Var("userFloat('refit_tr_pt')", float),
+    
+    # Impact Parameters (rispetto al PV refittato)
+    dxy_mu1 = Var("userFloat('dxy_mu1')", float),
+    dxy_mu2 = Var("userFloat('dxy_mu2')", float),
+    dxy_tr  = Var("userFloat('dxy_tr')", float),
+    
+    # Isolamento e Angoli
+    mindca_iso = Var("userFloat('mindca_iso')", float),
+    rel_iso    = Var("userFloat('relative_iso')", float),
+    pointingAngle = Var("userFloat('pointingAngle')", float),
+
+    # High Purity Flags
+    mu1_hp = Var("userInt('mu1_innerTrk_hp')", int),
+    mu2_hp = Var("userInt('mu2_innerTrk_hp')", int),
+    tr_hp  = Var("userInt('tr_innerTrk_hp')", int),
+
+    # --- Muon Matching (Solo per Muone 1 e 2) ---
+    # Stazione 1
+    mu1_match1_dX = Var("userFloat('mu1_match1_dX')", float),
+    mu1_match1_pullX = Var("userFloat('mu1_match1_pullX')", float),
+    mu2_match1_dX = Var("userFloat('mu2_match1_dX')", float),
+    mu2_match1_pullX = Var("userFloat('mu2_match1_pullX')", float),
+    
+    # Stazione 2
+    mu1_match2_dX = Var("userFloat('mu1_match2_dX')", float),
+    mu1_match2_pullX = Var("userFloat('mu1_match2_pullX')", float),
+    mu2_match2_dX = Var("userFloat('mu2_match2_dX')", float),
+    mu2_match2_pullX = Var("userFloat('mu2_match2_pullX')", float),
     )
 )
 
@@ -184,10 +213,12 @@ TrgMatchMuonTable = cms.EDProducer("SimplePATMuonFlatTableProducer",
     name = cms.string("Muon"),
     variables = cms.PSet(
         # --- Kinematics ---
+        p     = Var("p", float, precision=12),
         pt     = Var("pt", float, precision=12),
         eta    = Var("eta", float, precision=12),
         phi    = Var("phi", float, precision=12),
         mass   = Var("mass", float, precision=12),
+        energy   = Var("energy", float, precision=12),
         charge = Var("charge", int),
 
         # --- Impact Parameters (DXY, DZ) ---
@@ -217,12 +248,79 @@ TrgMatchMuonTable = cms.EDProducer("SimplePATMuonFlatTableProducer",
         pfRelIso03_all = Var("(pfIsolationR03().sumChargedHadronPt + max(pfIsolationR03().sumNeutralHadronEt + pfIsolationR03().sumPhotonEt - pfIsolationR03().sumPUPt/2,0.0))/pt", float),
         pfRelIso04_all = Var("(pfIsolationR04().sumChargedHadronPt + max(pfIsolationR04().sumNeutralHadronEt + pfIsolationR04().sumPhotonEt - pfIsolationR04().sumPUPt/2,0.0))/pt", float),
         
+        mvaId = Var("mvaIDValue()", float, doc="MVA Soft ID"),
+        softMva = Var("softMvaValue()", float),
+        segmentCompatibility = Var("segmentCompatibility()", float),
+        caloCompatibility = Var("caloCompatibility()", float),
+
+        sumPt03 = Var("isolationR03().sumPt", float, doc="Tracker isolation sumPt in dR=0.3"),
+        sumPt05 = Var("isolationR05().sumPt", float, doc="Tracker isolation sumPt in dR=0.5"),
+
+        # Numero di tracce in un cono di 0.3
+        nTracks03 = Var("isolationR03().nTracks", int, doc="Number of tracks in dR=0.3 tracker isolation cone"),
+        nTracks05 = Var("isolationR05().nTracks", int, doc="Number of tracks in dR=0.5 tracker isolation cone"),
+        # CombinedQuality Updated stats
+        trkKink = Var("combinedQuality().trkKink", float),
+        glbKink = Var("combinedQuality().glbKink", float),
+        trkRelChi2 = Var("combinedQuality().trkRelChi2", float),
+        staRelChi2 = Var("combinedQuality().staRelChi2", float),
+        chi2LocalPosition = Var("combinedQuality().chi2LocalPosition", float),
+        chi2LocalMomentum = Var("combinedQuality().chi2LocalMomentum", float),
+        localDistance = Var("combinedQuality().localDistance", float),
+        globalDeltaEtaPhi = Var("combinedQuality().globalDeltaEtaPhi", float),
+        tightMatch = Var("combinedQuality().tightMatch", float),
+        glbTrackProbability = Var("combinedQuality().glbTrackProbability", float),
+
         ## Specific Trigger path matching info
         HLT_DoubleMu3_Trk_Tau3mu = Var("userInt('HLT_DoubleMu3_Trk_Tau3mu')", int, doc="Matched to HLT_DoubleMu3_Trk_Tau3mu"),
         HLT_DoubleMu3_TkMu_DsTau3Mu_v = Var("userInt('HLT_DoubleMu3_TkMu_DsTau3Mu_v')", int, doc="Matched to HLT_DoubleMu3_TkMu_DsTau3Mu_v"),
         HLT_DoubleMu3_Trk_Tau3mu_NoL1Mass_v = Var("userInt('HLT_DoubleMu3_Trk_Tau3mu_NoL1Mass_v')", int, doc="Matched to HLT_DoubleMu3_Trk_Tau3mu_NoL1Mass_v"),
         HLT_DoubleMu4_3_LowMass_v = Var("userInt('HLT_DoubleMu4_3_LowMass_v')", int, doc="Matched to HLT_DoubleMu4_3_LowMass_v"),
         HLT_DoubleMu4_LowMass_Displaced_v = Var("userInt('HLT_DoubleMu4_LowMass_Displaced_v')", int, doc="Matched to HLT_DoubleMu4_LowMass_Displaced_v"),
+
+        # --- Validation Flags ---
+        isQValid = Var("isQualityValid()", bool, doc="Muon isQualityValid"),
+        isTValid = Var("isTimeValid()", bool, doc="Muon isTimeValid"),
+        isIsoValid = Var("isIsolationValid()", bool, doc="Muon isIsolationValid"),
+
+        # --- Global Track Variables ---
+        GLnormChi2 = Var("?globalTrack().isNonnull()?globalTrack().normalizedChi2():-99", float, doc="Global track normalized chi2"),
+        GL_nValidMuHits = Var("?globalTrack().isNonnull()?globalTrack().hitPattern().numberOfValidMuonHits():-1", int, doc="Number of valid muon hits in global track"),
+
+        # --- Tracker & Hit Pattern ---
+        trkLayersWMeas = Var("?innerTrack().isNonnull()?innerTrack().hitPattern().trackerLayersWithMeasurement():-1", int),
+        nValidTrackerHits = Var("?innerTrack().isNonnull()?innerTrack().hitPattern().numberOfValidTrackerHits():-1", int),
+        nValidPixelHits = Var("?innerTrack().isNonnull()?innerTrack().hitPattern().numberOfValidPixelHits():-1", int),
+        validMuonHitComb = Var("?globalTrack().isNonnull()?globalTrack().hitPattern().numberOfValidMuonHits():-1", int), # Spesso mappato così
+
+        # --- Outer Track (Standalone Muon) ---
+        outerTrk_P = Var("?outerTrack().isNonnull()?outerTrack().p():-99", float),
+        outerTrk_Eta = Var("?outerTrack().isNonnull()?outerTrack().eta():-99", float),
+        outerTrk_normChi2 = Var("?outerTrack().isNonnull()?outerTrack().normalizedChi2():-99", float),
+        outerTrk_muStValidHits = Var("?outerTrack().isNonnull()?outerTrack().hitPattern().muonStationsWithValidHits():-1", int),
+
+        # --- Inner Track (Tracker Track) ---
+        innerTrk_P = Var("?innerTrack().isNonnull()?innerTrack().p():-99", float),
+        innerTrk_Eta = Var("?innerTrack().isNonnull()?innerTrack().eta():-99", float),
+        innerTrk_normChi2 = Var("?innerTrack().isNonnull()?innerTrack().normalizedChi2():-99", float),
+        innerTrk_ValidFraction = Var("?innerTrack().isNonnull()?innerTrack().validFraction():-99", float),
+
+        # --- Combined Quality & Compatibility ---
+        QInnerOuter = Var("combinedQuality().updatedSta", bool), # Spesso usato come proxy per QInnerOuter
+        cQ_uS = Var("combinedQuality().updatedSta", bool),
+        cQ_tK = Var("combinedQuality().trkKink", float),
+        cQ_gK = Var("combinedQuality().glbKink", float),
+        cQ_tRChi2 = Var("combinedQuality().trkRelChi2", float),
+        cQ_sRChi2 = Var("combinedQuality().staRelChi2", float),
+        cQ_Chi2LP = Var("combinedQuality().chi2LocalPosition", float),
+        cQ_Chi2LM = Var("combinedQuality().chi2LocalMomentum", float),
+        cQ_lD = Var("combinedQuality().localDistance", float),
+        cQ_gDEP = Var("combinedQuality().globalDeltaEtaPhi", float),
+        cQ_tM = Var("combinedQuality().tightMatch", bool),
+        cQ_gTP = Var("combinedQuality().glbTrackProbability", float),
+        
+        segmComp = Var("segmentCompatibility()", float),
+        caloComp = Var("caloCompatibility()", float),
     )
 )
 
@@ -255,12 +353,13 @@ trackTable = cms.EDProducer("SimplePFCandidateFlatTableProducer",
     )
 )
 
-l1TableTau3Mu = cms.EDProducer("myL1TableProducer",
-    src = cms.InputTag("gtStage2Digis"),
-    name = cms.string("L1Seed"),
-    doc = cms.string("L1 seeds"),
-    extension = cms.bool(False), # <--- AGGIUNGI QUESTA RIGA
-    seeds = cms.vstring(
+triggerTableTau3Mu = cms.EDProducer("myTriggerTableProducer",
+    l1Src = cms.InputTag("gtStage2Digis"),
+    hltSrc = cms.InputTag("TriggerResults", "", "HLT"),
+    name = cms.string("Trigger"), # Nome della tabella nel ROOT
+    doc = cms.string("L1 and HLT bits for Tau3Mu analysis"),
+    extension = cms.bool(False),
+    l1Seeds = cms.vstring(
         "L1_TripleMu_5SQ_3SQ_0_DoubleMu_5_3_SQ_OS_Mass_Max9",
         "L1_DoubleMu0er1p4_SQ_OS_dR_Max1p4",
         "L1_DoubleMu0er1p5_SQ_OS_dR_Max1p4",
@@ -271,7 +370,8 @@ l1TableTau3Mu = cms.EDProducer("myL1TableProducer",
         "L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p5",
         "L1_TripleMu_2SQ_1p5SQ_0OQ_Mass_Max12",
         "L1_TripleMu_3SQ_2p5SQ_0OQ_Mass_Max12"
-    )
+    ),
+    hltPaths = HLT_path_list
 )
 
 # Vertex Table
@@ -336,7 +436,7 @@ tau2mu1trSequence += (
     muonBPH +
     TrgMatchMuonTable +
     trackTable +
-    l1TableTau3Mu +
+    triggerTableTau3Mu +
     pvTable
 )
 
