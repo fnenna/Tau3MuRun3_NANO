@@ -48,7 +48,7 @@ python3 tau3mu_analysis_runner.py -e <era> -s <stream> -t <type> -o <output_dir>
 ### Arguments:
 | Flag | Description | Examples |
 | :--- | :--- | :--- |
-| `-e` | Data-taking Era | `2022`, `2023`, `2024` |
+| `-e` | Data-taking Era | `B`, `C`, `D` |
 | `-s` | Trigger Stream | `ParkingDoubleMuonLowMass`, `ParkingLLP` |
 | `-t` | Analysis Type | `data_signal`, `data_control`, `MC` |
 | `-o` | Output Directory | `output_v1`, `test_results` |
