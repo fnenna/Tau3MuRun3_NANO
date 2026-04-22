@@ -204,6 +204,11 @@ tau2mu1trTable = cms.EDProducer("SimpleCompositeCandidateFlatTableProducer",
     mu1_match2_pullX = Var("userFloat('mu1_match2_pullX')", float),
     mu2_match2_dX = Var("userFloat('mu2_match2_dX')", float),
     mu2_match2_pullX = Var("userFloat('mu2_match2_pullX')", float),
+
+    mu1_iso03_clean = Var("userFloat('mu1_iso03_clean')", float),
+    mu1_iso04_clean = Var("userFloat('mu1_iso04_clean')", float),
+    mu2_iso03_clean = Var("userFloat('mu2_iso03_clean')", float),
+    mu2_iso04_clean = Var("userFloat('mu2_iso04_clean')", float),
     )
 )
 
@@ -244,7 +249,6 @@ TrgMatchMuonTable = cms.EDProducer("SimplePATMuonFlatTableProducer",
         genPartPdgId = Var("userInt('mcMatch')" if isMC else "0", int),
         
         # --- Isolation (Standard) ---
-        # Queste funzionano quasi sempre perché calcolate dai depositi nel rivelatore
         pfRelIso03_all = Var("(pfIsolationR03().sumChargedHadronPt + max(pfIsolationR03().sumNeutralHadronEt + pfIsolationR03().sumPhotonEt - pfIsolationR03().sumPUPt/2,0.0))/pt", float),
         pfRelIso04_all = Var("(pfIsolationR04().sumChargedHadronPt + max(pfIsolationR04().sumNeutralHadronEt + pfIsolationR04().sumPhotonEt - pfIsolationR04().sumPUPt/2,0.0))/pt", float),
         

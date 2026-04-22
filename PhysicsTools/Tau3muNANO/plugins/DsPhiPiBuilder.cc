@@ -190,6 +190,30 @@ public:
                         }
                     }
 
+                    // remove contribution of the pion track from the muon PFisolation parameter:
+                    float trk_pt = tr.pt();
+                    float dr_m1_tr = reco::deltaR(m1, tr);
+                    float dr_m2_tr = reco::deltaR(m2, tr);
+
+                    // Funzione helper logica (o inline) per pulire l'ISO
+                    auto get_cleaned_rel_iso = [&](const pat::Muon& mu, float dr_mu_tr, float R) {
+                        auto iso = (R == 0.4) ? mu.pfIsolationR04() : mu.pfIsolationR03();
+                        float sumCharged = iso.sumChargedHadronPt;
+                        
+                        // Se la traccia del pione è nel cono, la sottraggo
+                        if (dr_mu_tr < R) sumCharged -= trk_pt;
+                        
+                        float full_iso = std::max(0.f, sumCharged) + 
+                                        std::max(0.f, iso.sumNeutralHadronEt + iso.sumPhotonEt - 0.5f * iso.sumPUPt);
+                        return full_iso / mu.pt();
+                    };
+
+                    float mu1_iso03_clean = get_cleaned_rel_iso(m1, dr_m1_tr, 0.3);
+                    float mu1_iso04_clean = get_cleaned_rel_iso(m1, dr_m1_tr, 0.4);
+                    float mu2_iso03_clean = get_cleaned_rel_iso(m2, dr_m2_tr, 0.3);
+                    float mu2_iso04_clean = get_cleaned_rel_iso(m2, dr_m2_tr, 0.4);
+
+                    // Salva come userFloat
                     // --- Fill Candidate ---
                     cand.setP4(p4_ref);
                     cand.setCharge(m1.charge() + m2.charge() + tr.charge());
@@ -253,6 +277,11 @@ public:
                     // Matching (Solo Muoni)
                     fillMatchInfo(m1, cand, "mu1");
                     fillMatchInfo(m2, cand, "mu2");
+
+                    cand.addUserFloat("mu1_iso03_clean", mu1_iso03_clean);
+                    cand.addUserFloat("mu1_iso04_clean", mu1_iso04_clean);
+                    cand.addUserFloat("mu2_iso03_clean", mu2_iso03_clean);
+                    cand.addUserFloat("mu2_iso04_clean", mu2_iso04_clean);
 
                     ret_val->push_back(cand);
                 }
@@ -352,6 +381,10 @@ public:
             }
         }
 
+        cand.addUserFloat("mu1_iso03_clean", -99.);
+        cand.addUserFloat("mu1_iso04_clean", -99.);
+        cand.addUserFloat("mu2_iso03_clean", -99.);
+        cand.addUserFloat("mu2_iso04_clean", -99.);
         cand.addUserFloat("pointingAngle", -99);
     }
 
