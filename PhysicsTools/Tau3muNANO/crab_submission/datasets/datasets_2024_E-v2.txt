@@ -1,8 +1,0 @@
-/ParkingDoubleMuonLowMass0/Run2024E-PromptReco-v2/MINIAOD
-/ParkingDoubleMuonLowMass1/Run2024E-PromptReco-v2/MINIAOD
-/ParkingDoubleMuonLowMass2/Run2024E-PromptReco-v2/MINIAOD
-/ParkingDoubleMuonLowMass3/Run2024E-PromptReco-v2/MINIAOD
-/ParkingDoubleMuonLowMass4/Run2024E-PromptReco-v2/MINIAOD
-/ParkingDoubleMuonLowMass5/Run2024E-PromptReco-v2/MINIAOD
-/ParkingDoubleMuonLowMass6/Run2024E-PromptReco-v2/MINIAOD
-/ParkingDoubleMuonLowMass7/Run2024E-PromptReco-v2/MINIAOD
