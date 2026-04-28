@@ -4,7 +4,7 @@ import FWCore.ParameterSet.VarParsing as VarParsing
 
 # --- 1. CONFIGURAZIONE PARAMETRI ---
 options = VarParsing.VarParsing('analysis')
-options.register('isMC', True, 
+options.register('isMC', False, 
                  VarParsing.VarParsing.multiplicity.singleton, 
                  VarParsing.VarParsing.varType.bool, 
                  "True se MC, False se Data")
@@ -28,7 +28,7 @@ if isMC:
     process.GlobalTag = GlobalTag(process.GlobalTag, '140X_mcRun3_2024_realistic_v26', '')
 else:
     # Esempio per Data 2024 (cambiala in base all'era specifica!)
-    process.GlobalTag = GlobalTag(process.GlobalTag, '140X_dataRun3_v4', '')
+    process.GlobalTag = GlobalTag(process.GlobalTag, '140X_dataRun3_v20', '')
 
 output_name = "dsphipi_output_MC.root" if isMC else "dsphipi_output_Data.root"
 

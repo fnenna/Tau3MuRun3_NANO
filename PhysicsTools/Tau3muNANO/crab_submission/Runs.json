@@ -1,0 +1,84 @@
+{
+    "2022": {
+        "Eras": ["C", "D-v1", "D-v2", "E", "F", "G"],
+        "GTs": ["124X_dataRun3_PromptAnalysis_v1", "124X_dataRun3_PromptAnalysis_v1", "124X_dataRun3_PromptAnalysis_v1", 
+                "124X_dataRun3_Prompt_v10", "130X_dataRun3_PromptAnalysis_v1", "130X_dataRun3_PromptAnalysis_v1"],
+        "golden_json": ["Collisions22/Cert_Collisions2022_eraC_355862_357482_Golden.json", "Collisions22/Cert_Collisions2022_eraD_357538_357900_Golden.json",
+                        "Collisions22/Cert_Collisions2022_eraD_357538_357900_Golden.json", "Collisions22/Cert_Collisions2022_eraE_359022_360331_Golden.json",
+                        "Collisions22/Cert_Collisions2022_eraF_360390_362167_Golden.json", "Collisions22/Cert_Collisions2022_eraG_362433_362760_Golden.json"
+                    ],
+        "database": "ParkingDoubleMuonLowMass*",
+        "Campaign": ["Run2022C-PromptReco-v1", "Run2022D-PromptReco-v1", "Run2022D-PromptReco-v2", "Run2022E-PromptReco-v1", "Run2022F-22Sep2023-v1", "Run2022G-22Sep2023-v*"],
+        
+        "MC_era": ["MC_Bd_pre", "MC_Bu_pre", "MC_Ds_pre", "MC_Bd_post", "MC_Bu_post", "MC_Ds_post"],
+        "MC_input_type": ["global", "global", "global", "global", "global", "global"],
+        "MC_GTs": ["130X_mcRun3_2022_realistic_v5", "130X_mcRun3_2022_realistic_v5", "130X_mcRun3_2022_realistic_v5", 
+                    "130X_mcRun3_2022_realistic_postEE_v6", "130X_mcRun3_2022_realistic_postEE_v6", "130X_mcRun3_2022_realistic_postEE_v6"],
+        "MC_datasets": [
+            "/BdtoTau_Tauto3Mu_3MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer22MiniAODv4-130X_mcRun3_2022_realistic_v5-v2/MINIAODSIM", 
+            "/ButoTau_Tauto3Mu_3MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer22MiniAODv4-130X_mcRun3_2022_realistic_v5-v2/MINIAODSIM", 
+            "/DstoTau_Tauto3Mu_3MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer22MiniAODv4-130X_mcRun3_2022_realistic_v5-v2/MINIAODSIM", 
+            "/BdtoTau_Tauto3Mu_3MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer22EEMiniAODv4-130X_mcRun3_2022_realistic_postEE_v6-v2/MINIAODSIM", 
+            "/ButoTau_Tauto3Mu_3MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer22EEMiniAODv4-130X_mcRun3_2022_realistic_postEE_v6-v2/MINIAODSIM", 
+            "/DstoTau_Tauto3Mu_3MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer22EEMiniAODv4-130X_mcRun3_2022_realistic_postEE_v6-v2/MINIAODSIM"
+        ]
+    },
+
+    "2023": {
+        "Eras": ["B", "C-v1", "C-v2", "C-v3", "C-v4", "D-v1", "D-v2"],
+        "GTs": ["130X_dataRun3_PromptAnalysis_v1", "130X_dataRun3_PromptAnalysis_v1", "130X_dataRun3_PromptAnalysis_v1", 
+                "130X_dataRun3_PromptAnalysis_v1", "130X_dataRun3_PromptAnalysis_v1", "130X_dataRun3_PromptAnalysis_v1", "130X_dataRun3_PromptAnalysis_v1"],
+        "golden_json": ["Collisions23/Cert_Collisions2023_eraB_366403_367079_Golden.json", "Collisions23/Cert_Collisions2023_eraC_367095_368823_Golden.json",
+                        "Collisions23/Cert_Collisions2023_eraC_367095_368823_Golden.json", "Collisions23/Cert_Collisions2023_eraC_367095_368823_Golden.json",
+                        "Collisions23/Cert_Collisions2023_eraC_367095_368823_Golden.json", "Collisions23/Cert_Collisions2023_eraD_369803_370790_Golden.json",
+                        "Collisions23/Cert_Collisions2023_eraD_369803_370790_Golden.json"
+                    ],
+        "database": "ParkingDoubleMuonLowMass*",
+        "Campaign": ["Run2023B-22Sep2023-v*", "Run2023C-22Sep2023_v1-v*", "Run2023C-22Sep2023_v2-v1", "Run2023C-22Sep2023_v3-v1", "Run2023C-22Sep2023_v4-v*", "Run2023D-22Sep2023_v1-v1", "Run2023D-22Sep2023_v2-v*"],
+        
+        "MC_era": ["MC_Bd_pre", "MC_Bu_pre", "MC_Ds_pre", "MC_Bd_post", "MC_Bu_post", "MC_Ds_post"],
+        "MC_input_type": ["global", "global", "global", "global", "global", "global"],
+        "MC_GTs": ["130X_mcRun3_2023_realistic_v14", "130X_mcRun3_2023_realistic_v14", "130X_mcRun3_2023_realistic_v14", 
+                    "130X_mcRun3_2023_realistic_postBPix_v2", "130X_mcRun3_2023_realistic_postBPix_v2", "130X_mcRun3_2023_realistic_postBPix_v2"],
+        "MC_datasets": [
+            "/BdtoTau_Tauto3Mu_3MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer23MiniAODv4-130X_mcRun3_2023_realistic_v14-v2/MINIAODSIM", 
+            "/ButoTau_Tauto3Mu_3MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer23MiniAODv4-130X_mcRun3_2023_realistic_v14-v2/MINIAODSIM", 
+            "/DstoTau_Tauto3Mu_3MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer23MiniAODv4-130X_mcRun3_2023_realistic_v14-v1/MINIAODSIM", 
+            "/BdtoTau_Tauto3Mu_3MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer23BPixMiniAODv4-130X_mcRun3_2023_realistic_postBPix_v2-v2/MINIAODSIM", 
+            "/ButoTau_Tauto3Mu_3MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer23BPixMiniAODv4-130X_mcRun3_2023_realistic_postBPix_v2-v3/MINIAODSIM", 
+            "/DstoTau_Tauto3Mu_3MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer23BPixMiniAODv4-130X_mcRun3_2023_realistic_postBPix_v2-v1/MINIAODSIM"
+        ]
+    },
+
+    "2024": {
+        "Eras": ["B", "C", "D", "E-v1", "E-v2", "F", "G", "H", "I-v1", "I-v2"],
+        "GTs": ["140X_dataRun3_v20","140X_dataRun3_v20","140X_dataRun3_v20","140X_dataRun3_v20","140X_dataRun3_v20","140X_dataRun3_v20", "140X_dataRun3_v20","140X_dataRun3_v20","140X_dataRun3_v20","140X_dataRun3_v20"],
+        "golden_json": ["Collisions24/2024B_Golden.json", "Collisions24/2024C_Golden.json", "Collisions24/2024D_Golden.json","Collisions24/2024E_Golden.json", "Collisions24/2024E_Golden.json", "Collisions24/2024F_Golden.json", "Collisions24/2024G_Golden.json",
+                        "Collisions24/2024H_Golden.json", "Collisions24/2024I_Golden.json", "Collisions24/2024I_Golden.json"
+                    ],
+        "database": "ParkingDoubleMuonLowMass*",
+        "Campaign": ["Run2024B-PromptReco-v1", "Run2024C-PromptReco-v1", "Run2024D-PromptReco-v1", "Run2024E-PromptReco-v1", "Run2024E-PromptReco-v2", "Run2024F-PromptReco-v1", "Run2024G-PromptReco-v1", "Run2024H-PromptReco-v1", "Run2024I-PromptReco-v1", "Run2024I-PromptReco-v2"],
+        
+        "MC_era": ["MC_DsPhiPi"],
+        "MC_input_type": ["global"],
+        "MC_GTs": ["140X_mcRun3_2024_realistic_v26"],
+        "MC_datasets": ["/DstoPhiPi-Phito2Mu_Fil-Mu_TuneCP5_13p6TeV_pythia8-evtgen/RunIII2024Summer24MiniAOD-140X_mcRun3_2024_realistic_v26-v2/MINIAODSIM"
+        ]
+    },
+
+    "2025": {
+        "Eras": ["C-prompt", "C-rereco"],
+        "GTs": ["150X_dataRun3_Prompt_v1","150X_dataRun3_Prompt_v1"],
+        "golden_json": ["Cert_Collisions2025_*_Golden.json","Cert_Collisions2025_*_Golden.json"
+                    ],
+        "database": "ParkingDoubleMuonLowMass0",
+        "Campaign": ["Run2025C-TrkRadDamage-v1", "Run2025C-PromptReco-v2"],
+        
+        "MC_era": [],
+        "MC_input_type": [],
+        "MC_GTs": [],
+        "MC_datasets": [
+        ]
+    }
+
+}

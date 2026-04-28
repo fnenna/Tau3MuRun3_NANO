@@ -1,6 +1,16 @@
 import FWCore.ParameterSet.Config as cms
 from Configuration.StandardSequences.Eras import eras
+import FWCore.ParameterSet.VarParsing as VarParsing
 
+# --- 1. CONFIGURAZIONE PARAMETRI ---
+options = VarParsing.VarParsing('analysis')
+options.register('isMC', True, 
+                 VarParsing.VarParsing.multiplicity.singleton, 
+                 VarParsing.VarParsing.varType.bool, 
+                 "True se MC, False se Data")
+options.parseArguments()
+
+isMC = options.isMC
 # 1. Definisci il processo usando l'era corretta (es. Run2 2018 o Run3)
 process = cms.Process('TEST', eras.Run3)
 
@@ -15,8 +25,14 @@ process.load("TrackingTools.TransientTrack.TransientTrackBuilder_cfi")
 
 # 3. Imposta la Global Tag (cambiala in base al tuo dataset!)
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, '140X_mcRun3_2024_realistic_v26', '') 
+if isMC:
+    # Esempio per MC 2024
+    process.GlobalTag = GlobalTag(process.GlobalTag, '140X_mcRun3_2024_realistic_v26', '')
+else:
+    # Esempio per Data 2024 (cambiala in base all'era specifica!)
+    process.GlobalTag = GlobalTag(process.GlobalTag, '140X_dataRun3_v4', '')
 
+output_name = "tau3mu_output_MC.root" if isMC else "tau3mu_output_Data.root"
 
 # 4. Numero di eventi da processare (-1 per tutti)
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(1000))
@@ -30,10 +46,14 @@ process.source = cms.source = cms.Source("PoolSource",
 # Se il codice è in un file chiamato 'PhysicsTools/BPHNano/python/tau3mu_cff.py'
 process.load("PhysicsTools.Tau3muNANO.Tau3mu_builder_cff")
 
-process.load("SimGeneral.HepPDTESSource.pythiapdt_cfi") ##if isMC
+setupTau3Mu(process, isMC)
+
+if isMC:
+    process.load("SimGeneral.HepPDTESSource.pythiapdt_cfi")
+    
 # 7. Definisci il file di output NanoAOD
 process.out = cms.OutputModule("NanoAODOutputModule",
-    fileName = cms.untracked.string("tau3mu_test_outputMC.root"),
+    fileName = cms.untracked.string(output_name),
     SelectEvents = cms.untracked.PSet(
         SelectEvents = cms.vstring('p') # 'p' deve essere il nome del tuo cms.Path
     ),
