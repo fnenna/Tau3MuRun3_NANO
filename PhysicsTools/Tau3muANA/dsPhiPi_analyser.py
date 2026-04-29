@@ -99,11 +99,11 @@ def process_tau3mu_events(sub_df, isMC):
     sub_df["L1seed"] = L1seed
     # Check HLT
     #HLT_passed = dak.any(dak.str.match_substring(sub_df.Trigger_hltname,"HLT_DoubleMu3_Trk_Tau3mu_v") & (sub_df.Trigger_hltdecision == 1), axis = 1)
-    HLT_passed = (sub_df["Trigger_HLT_DoubleMu3_TkMu_DsTau3Mu_v"]==1)
+    HLT_passed = (sub_df["Trigger_HLT_DoubleMu3_Trk_Tau3mu"]==1)
     dak_HLTmask = HLT_passed
     dak_HLTpassed = dak.sum(dak_HLTmask&dak_L1mask)  
     cutflow_lazy["HLTpassed"] = dak_HLTpassed
-    HLTpath = dak.values_astype(1*sub_df["Trigger_HLT_DoubleMu3_TkMu_DsTau3Mu_v"]
+    HLTpath = dak.values_astype(1*sub_df["Trigger_HLT_DoubleMu3_Trk_Tau3mu"]
             + 10*sub_df["Trigger_HLT_DoubleMu4_3_LowMass_v"]
             + 100*sub_df["Trigger_HLT_DoubleMu4_LowMass_Displaced_v"], "int64")
     sub_df["HLTpath"] = HLTpath
