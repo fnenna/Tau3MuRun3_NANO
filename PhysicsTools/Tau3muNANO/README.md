@@ -39,7 +39,7 @@ The main informations on data and MC samples are stored in the `Runs.json` file 
 1. Apply your changes in `Runs.json`;
 2. If your changes affect data (not required if changes are only in MC), run `getDatset.py` to download information from DAS (as in the example below);
     - `voms-proxy-init -voms cms -rfc`
-    - `python3 getDatset.py --year 2022` 
+    - `python3 getDatset.py --year 2025` 
 
 <p>&nbsp;</p>
 
@@ -54,15 +54,5 @@ submitAllJobs.sh [Year] [MCflag]
 cd CrabSubmission
 source submit_CRAB.sh [era] [year] 
 ```
-**For DATA:**
-
-* `[year]` = `2022` : `[era]` = `C, D-v1, D-v2, E, F, G`
-* `[year]` = `2023` : `[era]` = `C-v1, C-v2, C-v3, C-v4, D-v1, D-v2`
-* `[year]` = `2024` : `[era]` = `?`
-
-**For MC:**
-
-* `[year]` = `2022` or  `2023`: `[era]` = `MC_Bd_pre, MC_Bu_pre, MC_Ds_pre, MC_Bd_post, MC_Bu_post, MC_Ds_post`
-* `[year]` = `2024` : `[era]` = `MC_Bd, MC_Bu, MC_Ds`
 
 <p>&nbsp;</p>
