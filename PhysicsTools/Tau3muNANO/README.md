@@ -52,7 +52,7 @@ submitAllJobs.sh [Year] [MCflag]
 ### Run ntuplizer on a full dataset:
 ```
 cd CrabSubmission
-source submit_CRAB.sh [era] [year] 
+source submit_AllJobs.sh [era] [year] 
 ```
 
 <p>&nbsp;</p>
