@@ -23,6 +23,7 @@ declare -a era2022preE=("C" "D-v1" "D-v2" "E")
 declare -a era2022postE=("F" "G")
 declare -a era2023=("B" "C-v1" "C-v2" "C-v3" "C-v4" "D-v1" "D-v2")
 declare -a era2024=("B" "C" "D" "E-v1" "E-v2" "F" "G" "H" "I-v1" "I-v2")
+declare -a era2025=("B" "C-v1" "C-v2" "D" "E" "F-v1" "F-v2" "G")
 readarray -t MCeras22 < <(jq -r '.["2022"].MC_era[]' Runs.json)
 readarray -t MCeras23 < <(jq -r '.["2023"].MC_era[]' Runs.json)
 readarray -t MCeras24 < <(jq -r '.["2024"].MC_era[]' Runs.json)
@@ -31,7 +32,15 @@ current_dir=$(pwd)
 
 if [ "$MCflag" == "false" ]; then
     type=""
-    if [[ "$current_dir" == *"CMSSW_14_"* ]]; then
+    if [[ "$current_dir" == *"CMSSW_15_"* ]]; then
+        if [[ "$year" == "2025" ]]; then
+            era=("${era2025[@]}")
+        elif [[ "$year" == "2024" ]]; then
+            era=("${era2024[@]}")
+        else
+            return
+        fi
+    elif [[ "$current_dir" == *"CMSSW_14_"* ]]; then
         if [[ "$year" == "2024" ]]; then
             era=("${era2024[@]}")
         else

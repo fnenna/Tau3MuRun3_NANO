@@ -4,7 +4,7 @@ if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
     argparser.add_argument("--year", required=True, type=str, help="Year of the dataset")
     argparser.add_argument("--era", type=str, default=None, help="Era of the dataset")
-    argparser.add_argument("--MCera", type=str, default=None, help="Era of the dataset")
+    argparser.add_argument("--MCera", type=str, default=None, help="MC Era of the dataset")
     args = argparser.parse_args()
     
     year = args.year
@@ -17,7 +17,7 @@ if __name__ == "__main__":
     with open("Runs.json", "r") as file:
         data = json.load(file)[year]
 
-    # --- CASO DATA (isMC = False) ---
+    # --- case: isMC = False ---
     if era != None:
         era_index = data["Eras"].index(era) if era in data["Eras"] else None
         if era_index == None:
@@ -32,21 +32,20 @@ if __name__ == "__main__":
 
         command = f"""
         directory="$PWD";
-        # Puntiamo alla cartella 'test' dove hai i file test_DsPhiPi_cfg.py
+        # Point to 'test' dir with test_DsPhiPi_cfg.py file
         pathtoskimfile="$directory/../test"; 
         mkdir -p "{year}_era{era}"; 
         echo "Data {year} - era {era} is selected"; 
         
         path_cfg="$directory/{year}_era{era}/PatAndTree_cfg.py";
         
-        # Copiamo il tuo file di test specifico
+        # Copy your specific test file
         cp "$pathtoskimfile/test_DsPhiPi_cfg.py" "$path_cfg";
         
-        # Sostituiamo il Global Tag (adattato al tuo placeholder nel file di test)
-        # Se nel tuo file hai '140X_dataRun3_v4', sostituiamo quello
+        # Replace with the Global Tag 
         sed -i "s#140X_dataRun3_v4#{globaltag}#g" "$path_cfg";
         
-        # FORZIAMO isMC = False nel file cfg per sicurezza
+        # Force isMC = False
         sed -i "s#options.register('isMC', True#options.register('isMC', False#g" "$path_cfg";
 
         cp templates/report.sh "{year}_era{era}/report.sh";
@@ -79,7 +78,7 @@ if __name__ == "__main__":
             """
             subprocess.run(command, shell=True, check=True) 
 
-    # --- CASO MC (isMC = True) ---
+    # --- case: isMC = True ---
     elif MCera != None:
         era_index = data["MC_era"].index(MCera) if MCera in data["MC_era"] else None
         if era_index == None:
@@ -98,10 +97,10 @@ if __name__ == "__main__":
         path_cfg="$directory/{year}_{MCera}/PatAndTree_cfg.py";
         cp "$pathtoskimfile/test_DsPhiPi_cfg.py" "$path_cfg";
         
-        # Sostituiamo il Global Tag MC
+        # Replace with Global Tag MC
         sed -i "s#140X_mcRun3_2024_realistic_v26#{globaltag}#g" "$path_cfg";
         
-        # FORZIAMO isMC = True
+        # Force isMC = True
         sed -i "s#options.register('isMC', False#options.register('isMC', True#g" "$path_cfg";
 
         cp templates/CRAB_template_MC.py "{year}_{MCera}/CRAB_MC.py";
@@ -112,7 +111,7 @@ if __name__ == "__main__":
         sed -i "s#INPUT_TYPE#{MC_input_type}#g" "{year}_{MCera}/CRAB_MC.py";
         
         cd "{year}_{MCera}";
-        # crab submit -c "CRAB_MC.py"; # Decommenta quando sei pronto
+        # crab submit -c "CRAB_MC.py"; # Uncomment when ready
         cd ..;
         echo "{MCera} submitted!";
         """
