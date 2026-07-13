@@ -37,9 +37,9 @@ namespace {
     }
 }
 
-class Tau2Mu1TrkBuilder : public edm::global::EDProducer<> {
+class Ds2Mu1TrkBuilder : public edm::global::EDProducer<> {
 public:
-    explicit Tau2Mu1TrkBuilder(const edm::ParameterSet& cfg) :
+    explicit Ds2Mu1TrkBuilder(const edm::ParameterSet& cfg) :
         muonsToken_(consumes<pat::MuonCollection>(cfg.getParameter<edm::InputTag>("muons"))),
         tracksToken_(consumes<pat::PackedCandidateCollection>(cfg.getParameter<edm::InputTag>("tracks"))),
         vtxToken_(consumes<reco::VertexCollection>(cfg.getParameter<edm::InputTag>("vertices"))),
@@ -256,10 +256,14 @@ public:
 
                     // Displacement
                     cand.addUserFloat("flightDist", d3d.value());
+                    cand.addUserFloat("flightDistErr", d3d.error());
                     cand.addUserFloat("flightDistSig", d3d.value() / d3d.error());
-                    cand.addUserFloat("lxy_pv", d2d.value());
-                    cand.addUserFloat("distXYSig", d2d.value() / d2d.error());
+                    cand.addUserFloat("flightDistXY", d2d.value());
+                    cand.addUserFloat("flightDistXYErr", d2d.error());
+                    cand.addUserFloat("flightDistXYSig", d2d.value() / d2d.error());
                     cand.addUserFloat("flightDistBS", dBS.value());
+                    cand.addUserFloat("flightDistBSErr", dBS.error());
+                    cand.addUserFloat("flightDistBSSig", dBS.value() / dBS.error());
                     
                     // Impact Parameters
                     cand.addUserFloat("dxy_mu1", m1.innerTrack()->dxy(cleanPV.position()));
@@ -272,6 +276,7 @@ public:
                     cand.addUserInt("tr_innerTrk_hp",  tr.trackHighPurity());
                     cand.addUserFloat("relative_iso", sum_pt_iso / p4_ref.pt());
                     cand.addUserFloat("mindca_iso", min_dca);
+                    cand.addUserFloat("cosPointingAngle", cosPointingAngle);
                     cand.addUserFloat("pointingAngle", pointingAngle);
 
                     // Matching (Solo Muoni)
@@ -422,4 +427,4 @@ private:
     const edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> ttbToken_;
 };
 
-DEFINE_FWK_MODULE(Tau2Mu1TrkBuilder);
+DEFINE_FWK_MODULE(Ds2Mu1TrkBuilder);

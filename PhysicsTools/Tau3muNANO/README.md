@@ -1,6 +1,6 @@
 # Tau3Mu NanoAOD Analysis Workspace
 
-This workspace is dedicated to the production of **custom NanoAOD** for the \tau \to 3\mu$ decay analysis for the HF channel. It includes C++ plugins for Level-1 (L1) trigger bit extraction and specific configurations for vertex fitting and Tau3Mu candidate selection.
+This workspace is dedicated to the production of **custom NanoAOD** for the $\tau \to 3\mu$ decay analysis for the HF channel. It includes C++ plugins for Level-1 (L1) trigger bit extraction and specific configurations for vertex fitting and Tau3Mu candidate selection.
 
 ## ⚙️ Environment Setup
 
@@ -27,7 +27,7 @@ If you want to test the config file and produce the NanoAOD output from a small 
 1.  Ensure you have a valid grid proxy (`voms-proxy-init`).
 2.  Run the job:
     ```bash
-    cmsRun PhysicsTools/Tau3muNANO/test/run_{analysis_type}_cfg.py isMC=True/False
+    cmsRun PhysicsTools/Tau3muNANO/test/test_{analysis_type}_cfg.py isMC=True/False
     ```
     analysis_type = ["Tau3Mu", "DsPhiPi"]
 ---
@@ -43,16 +43,14 @@ The main informations on data and MC samples are stored in the `Runs.json` file 
 
 <p>&nbsp;</p>
 
-### Submit all era in a year:
+
+### Run ntuplizer on a full dataset for one specific year:
 ```
-submitAllJobs.sh [Year] [MCflag]
+cd crab_submission
+source submit_AllJobs.sh [Year] [isMC]
 ```
 * `[year]` = `2022`,  `2023` or `2024`: `[MCflag]` = `true or false`
 
-### Run ntuplizer on a full dataset:
-```
-cd CrabSubmission
-source submit_AllJobs.sh [era] [year] 
-```
+Note that `submit_AllJobs.sh` needs to be updated with the list of the eras for the year under analysis, if it has not been added yet.
 
 <p>&nbsp;</p>

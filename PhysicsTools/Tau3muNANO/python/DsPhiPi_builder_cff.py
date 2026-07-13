@@ -2,7 +2,10 @@ import FWCore.ParameterSet.Config as cms
 from PhysicsTools.NanoAOD.common_cff import *
 from PhysicsTools.NanoAOD.simpleGenParticleFlatTableProducer_cfi import simpleGenParticleFlatTableProducer
 from PhysicsTools.NanoAOD.muons_cff import muonTable
-# --- 0. CONTROL PARAMETERS ---
+
+
+# --- 0. TRIGGER PATHS ---
+
 HLT_path_list = cms.vstring(
         "HLT_DoubleMu3_Trk_Tau3mu", 
         "HLT_DoubleMu3_TkMu_DsTau3Mu_v", 
@@ -10,6 +13,20 @@ HLT_path_list = cms.vstring(
         "HLT_DoubleMu4_3_LowMass_v", 
         "HLT_DoubleMu4_LowMass_Displaced_v"
     )
+
+L1_path_list = cms.vstring(
+            "L1_TripleMu_5SQ_3SQ_0_DoubleMu_5_3_SQ_OS_Mass_Max9",
+            "L1_DoubleMu0er1p4_SQ_OS_dR_Max1p4",
+            "L1_DoubleMu0er1p5_SQ_OS_dR_Max1p4",
+            "L1_DoubleMu4_SQ_OS_dR_Max1p2",
+            "L1_DoubleMu4p5_SQ_OS_dR_Max1p2",
+            "L1_TripleMu_5SQ_3SQ_0OQ_DoubleMu_5_3_SQ_OS_Mass_Max9",
+            "L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p6",
+            "L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p5",
+            "L1_TripleMu_2SQ_1p5SQ_0OQ_Mass_Max12",
+            "L1_TripleMu_3SQ_2p5SQ_0OQ_Mass_Max12"
+        )
+
 # --- 1. EVENT FILTERS (HLT & SKIMMING) ---
 def setupDsPhiPi(process, isMC):
     # HLT Filter: Select events passing specific trigger paths
@@ -63,7 +80,7 @@ def setupDsPhiPi(process, isMC):
     )
 
     # Main Skim Filter: Drop events without at least one valid triplet candidate
-    process.tauCountFilter = cms.EDFilter("CandViewCountFilter",
+    process.DsCountFilter = cms.EDFilter("CandViewCountFilter",
         src = cms.InputTag("TwoMuonsOneTrackCand"),
         minNumber = cms.uint32(1)
     )
@@ -88,7 +105,6 @@ def setupDsPhiPi(process, isMC):
             additionalPdgId = cms.int32(22),
         )
 
-
         # Reco-to-Gen Matching: Match selected muons to gen-level muons
         process.muonGenMatch = cms.EDProducer("MCMatcher",
             src         = cms.InputTag("selectedMuons"),
@@ -102,7 +118,7 @@ def setupDsPhiPi(process, isMC):
             resolveByMatchQuality = cms.bool(True),
         )
 
-        # Embed matching results into the muon collection
+        # Embed matching info into muons
         process.muonsWithMatch = cms.EDProducer("MuonMatchEmbedder",
             src      = cms.InputTag("selectedMuons"),
             matching = cms.InputTag("muonGenMatch")
@@ -113,8 +129,8 @@ def setupDsPhiPi(process, isMC):
     # Define muon source based on MC/Data
     muonSrc = cms.InputTag("muonsWithMatch") if isMC else cms.InputTag("selectedMuons")
 
-    # Tau Candidate Builder: Perform vertex fitting for the 2Mu + 1Trk system
-    process.tau2mu1trBuilder = cms.EDProducer("Tau2Mu1TrkBuilder",
+    # Ds Candidate Builder: Perform vertex fitting for the 2Mu + 1Trk system
+    process.cand2mu1trBuilder = cms.EDProducer("Ds2Mu1TrkBuilder",
         muons    = muonSrc,
         tracks   = cms.InputTag("selectedTracks"),
         vertices = cms.InputTag("offlineSlimmedPrimaryVerticesWithBS"),
@@ -136,9 +152,9 @@ def setupDsPhiPi(process, isMC):
     # --- 4. FLAT TABLES DEFINITION (NanoAOD Output) ---
 
     # Tau Table: Stores triplet properties and vertex mass
-    process.tau2mu1trTable = cms.EDProducer("SimpleCompositeCandidateFlatTableProducer",
-        src = cms.InputTag("tau2mu1trBuilder"),
-        name = cms.string("Tau2MuTrk"),
+    process.cand2mu1trTable = cms.EDProducer("SimpleCompositeCandidateFlatTableProducer",
+        src = cms.InputTag("cand2mu1trBuilder"),
+        name = cms.string("Cand2MuTrk"),
         variables = cms.PSet(
         # Standard P4 del tripletto
         pt      = Var("pt", float),
@@ -168,10 +184,14 @@ def setupDsPhiPi(process, isMC):
         
         # Flight Distance & Displacement
         flightDist    = Var("userFloat('flightDist')", float),
+        flightDistErr = Var("userFloat('flightDistErr')", float),
         flightDistSig = Var("userFloat('flightDistSig')", float),
-        lxy_pv        = Var("userFloat('lxy_pv')", float),
-        distXYSig     = Var("userFloat('distXYSig')", float),
-        distBS        = Var("userFloat('flightDistBS')", float),
+        flightDistXY = Var("userFloat('flightDistXY')", float),
+        flightDistXYErr = Var("userFloat('flightDistXYErr')", float),
+        flightDistXYSig = Var("userFloat('flightDistXYSig')", float),
+        flightDistBS = Var("userFloat('flightDistBS')", float),
+        flightDistBSErr = Var("userFloat('flightDistBSErr')", float),
+        flightDistBSSig = Var("userFloat('flightDistBSSig')", float),
         
         # Refitted Kinematics (al vertice SV)
         refit_mu1_pt = Var("userFloat('refit_mu1_pt')", float),
@@ -186,6 +206,7 @@ def setupDsPhiPi(process, isMC):
         # Isolamento e Angoli
         mindca_iso = Var("userFloat('mindca_iso')", float),
         rel_iso    = Var("userFloat('relative_iso')", float),
+        cosPointingAngle = Var("userFloat('cosPointingAngle')", float),
         pointingAngle = Var("userFloat('pointingAngle')", float),
 
         # High Purity Flags
@@ -263,10 +284,8 @@ def setupDsPhiPi(process, isMC):
             sumPt03 = Var("isolationR03().sumPt", float, doc="Tracker isolation sumPt in dR=0.3"),
             sumPt05 = Var("isolationR05().sumPt", float, doc="Tracker isolation sumPt in dR=0.5"),
 
-            # Numero di tracce in un cono di 0.3
             nTracks03 = Var("isolationR03().nTracks", int, doc="Number of tracks in dR=0.3 tracker isolation cone"),
             nTracks05 = Var("isolationR05().nTracks", int, doc="Number of tracks in dR=0.5 tracker isolation cone"),
-            # CombinedQuality Updated stats
             trkKink = Var("combinedQuality().trkKink", float),
             glbKink = Var("combinedQuality().glbKink", float),
             trkRelChi2 = Var("combinedQuality().trkRelChi2", float),
@@ -360,37 +379,21 @@ def setupDsPhiPi(process, isMC):
         )
     )
 
-    process.triggerTableTau3Mu = cms.EDProducer("myTriggerTableProducer",
+    process.triggerTableDs2Mu1Trk = cms.EDProducer("myTriggerTableProducer",
         l1Src = cms.InputTag("gtStage2Digis"),
         hltSrc = cms.InputTag("TriggerResults", "", "HLT"),
         name = cms.string("Trigger"), # Nome della tabella nel ROOT
         doc = cms.string("L1 and HLT bits for Tau3Mu analysis"),
         extension = cms.bool(False),
-        l1Seeds = cms.vstring(
-            "L1_TripleMu_5SQ_3SQ_0_DoubleMu_5_3_SQ_OS_Mass_Max9",
-            "L1_DoubleMu0er1p4_SQ_OS_dR_Max1p4",
-            "L1_DoubleMu0er1p5_SQ_OS_dR_Max1p4",
-            "L1_DoubleMu4_SQ_OS_dR_Max1p2",
-            "L1_DoubleMu4p5_SQ_OS_dR_Max1p2",
-            "L1_TripleMu_5SQ_3SQ_0OQ_DoubleMu_5_3_SQ_OS_Mass_Max9",
-            "L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p6",
-            "L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p5",
-            "L1_TripleMu_2SQ_1p5SQ_0OQ_Mass_Max12",
-            "L1_TripleMu_3SQ_2p5SQ_0OQ_Mass_Max12"
-        ),
+        l1Seeds = L1_path_list,
         hltPaths = HLT_path_list
     )
 
-    # Vertex Table
-    process.pvTable = cms.EDProducer("SimpleVertexFlatTableProducer",
-        src = cms.InputTag("offlineSlimmedPrimaryVerticesWithBS"),
-        name = cms.string("PV"),
-        variables = cms.PSet(
-            x = Var("x", float, precision=10),
-            y = Var("y", float, precision=10),
-            z = Var("z", float, precision=10),
-            chi2 = Var("chi2", float, precision=8),
-        )
+    # BPH Vertex Table
+    process.pvTable = cms.EDProducer("PVertexBPHTable",
+    pvSrc = cms.InputTag("offlineSlimmedPrimaryVertices"),
+    goodPvCut = cms.string("!isFake && ndof > 4 && abs(z) <= 24 && position.Rho <= 2"), 
+    pvName = cms.string("PVtx")
     )
 
     process.puTable = cms.EDProducer("NPUTablesProducer",
@@ -421,8 +424,8 @@ def setupDsPhiPi(process, isMC):
 
     # --- 5. FINAL EXECUTION SEQUENCE ---
 
-    # Filter and selection path (applied to every event)
-    process.tau2mu1trSequence = cms.Sequence(
+    # Filter Sequence
+    process.cand2mu1trSequence = cms.Sequence(
         process.hltFilter +
         process.selectedMuons +
         process.TwoMuonsFilter +
@@ -431,12 +434,12 @@ def setupDsPhiPi(process, isMC):
         process.DiMuonCand +
         process.DiMuonCandFilter +
         process.TwoMuonsOneTrackCand +
-        process.tauCountFilter
+        process.DsCountFilter
     )
 
     # MC-specific modules
     if isMC:
-        process.tau2mu1trSequence += (
+        process.cand2mu1trSequence += (
             process.myFinalGenParticles +
             process.myGenIso +
             process.muonGenMatch +
@@ -444,17 +447,17 @@ def setupDsPhiPi(process, isMC):
         )
 
     # Candidate construction and table filling
-    process.tau2mu1trSequence += (
-        process.tau2mu1trBuilder +
-        process.tau2mu1trTable +
+    process.cand2mu1trSequence += (
+        process.cand2mu1trBuilder +
+        process.cand2mu1trTable +
         process.muonBPH +
         process.TrgMatchMuonTable +
         process.trackTable +
-        process.triggerTableTau3Mu +
+        process.triggerTableDs2Mu1Trk +
         process.pvTable +
         process.puTable
     )
 
     # Append Gen Table if MC
     if isMC:
-        processtau2mu1trSequence += process.myGenParticleTable
+        process.cand2mu1trSequence += process.myGenParticleTable

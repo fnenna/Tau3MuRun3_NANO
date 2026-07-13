@@ -18,13 +18,18 @@ HLT_path_list = cms.vstring(
         "HLT_DoubleMu4_LowMass_Displaced_v"
     )
 
-my_l1_seeds = [
-    "L1_DoubleMu0_er1p5_SQ_OS_dR_Max1p4",
-    "L1_DoubleMu4_SQ_OS_dR_Max1p2",
-    "L1_DoubleMu4p5_SQ_OS_dR_Max1p2",
-    "L1_TripleMu_5_3_3",
-    "L1_TripleMu_5_3p5_2p5_DoubleMu_5_2p5_OS_dR_Max5",
-]
+L1_path_list = cms.vstring(
+            "L1_TripleMu_5SQ_3SQ_0_DoubleMu_5_3_SQ_OS_Mass_Max9",
+            "L1_DoubleMu0er1p4_SQ_OS_dR_Max1p4",
+            "L1_DoubleMu0er1p5_SQ_OS_dR_Max1p4",
+            "L1_DoubleMu4_SQ_OS_dR_Max1p2",
+            "L1_DoubleMu4p5_SQ_OS_dR_Max1p2",
+            "L1_TripleMu_5SQ_3SQ_0OQ_DoubleMu_5_3_SQ_OS_Mass_Max9",
+            "L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p6",
+            "L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p5",
+            "L1_TripleMu_2SQ_1p5SQ_0OQ_Mass_Max12",
+            "L1_TripleMu_3SQ_2p5SQ_0OQ_Mass_Max12"
+        )
 
 def setupTau3Mu(process, isMC):
     # HLT Filter: Select events passing specific trigger paths
@@ -130,28 +135,24 @@ def setupTau3Mu(process, isMC):
         name = cms.string("Tau3Mu"),
         doc = cms.string("Tau to 3Mu candidates"),
         variables = cms.PSet(
-        # Standard P4 del tripletto
+        # Standard triplet P4
         pt      = Var("pt", float),
         eta     = Var("eta", float),
         phi     = Var("phi", float),
         charge  = Var("charge", int),
 
-        # --- Cinematica Muone 1 ---
         mu1_pt  = Var("userFloat('mu1_pt')", float, doc="pt of the first muon"),
         mu1_eta = Var("userFloat('mu1_eta')", float),
         mu1_phi = Var("userFloat('mu1_phi')", float),
 
-        # --- Cinematica Muone 2 ---
         mu2_pt  = Var("userFloat('mu2_pt')", float, doc="pt of the second muon"),
         mu2_eta = Var("userFloat('mu2_eta')", float),
         mu2_phi = Var("userFloat('mu2_phi')", float),
 
-        # --- Cinematica Muone 3 ---
         mu3_pt  = Var("userFloat('mu3_pt')", float, doc="pt of the third muon"),
         mu3_eta = Var("userFloat('mu3_eta')", float),
         mu3_phi = Var("userFloat('mu3_phi')", float),
 
-        # Indici originali
         mu1_idx = Var("userInt('mu1_idx')", int),
         mu2_idx = Var("userInt('mu2_idx')", int),
         mu3_idx  = Var("userInt('mu3_idx')", int),
@@ -177,17 +178,16 @@ def setupTau3Mu(process, isMC):
         distXYSig     = Var("userFloat('distXYSig')", float),
         distBS        = Var("userFloat('flightDistBS')", float),
         
-        # Refitted Kinematics (al vertice SV)
+        # Refitted Kinematics (SV fit)
         refit_mu1_pt = Var("userFloat('refit_mu1_pt')", float),
         refit_mu2_pt = Var("userFloat('refit_mu2_pt')", float),
         refit_mu3_pt  = Var("userFloat('refit_mu3_pt')", float),
         
-        # Impact Parameters (rispetto al PV refittato)
+        # Impact Parameters (PV refit)
         dxy_mu1 = Var("userFloat('dxy_mu1')", float),
         dxy_mu2 = Var("userFloat('dxy_mu2')", float),
         dxy_mu3  = Var("userFloat('dxy_mu3')", float),
         
-        # Isolamento e Angoli
         mindca_iso = Var("userFloat('mindca_iso')", float),
         rel_iso    = Var("userFloat('relative_iso')", float),
         pointingAngle = Var("userFloat('pointingAngle')", float),
@@ -198,7 +198,7 @@ def setupTau3Mu(process, isMC):
         mu3_hp  = Var("userInt('mu3_innerTrk_hp')", int),
 
         # --- Muon Matching (Solo per Muone 1 e 2) ---
-        # Stazione 1
+        # Station 1
         mu1_match1_dX = Var("userFloat('mu1_match1_dX')", float),
         mu1_match1_pullX = Var("userFloat('mu1_match1_pullX')", float),
         mu2_match1_dX = Var("userFloat('mu2_match1_dX')", float),
@@ -206,7 +206,7 @@ def setupTau3Mu(process, isMC):
         mu3_match1_dX = Var("userFloat('mu3_match1_dX')", float),
         mu3_match1_pullX = Var("userFloat('mu3_match1_pullX')", float),
         
-        # Stazione 2
+        # Station 2
         mu1_match2_dX = Var("userFloat('mu1_match2_dX')", float),
         mu1_match2_pullX = Var("userFloat('mu1_match2_pullX')", float),
         mu2_match2_dX = Var("userFloat('mu2_match2_dX')", float),
@@ -233,7 +233,6 @@ def setupTau3Mu(process, isMC):
             charge = Var("charge", int),
 
             # --- Impact Parameters (DXY, DZ) ---
-            # Usiamo i metodi standard di pat::Muon che non richiedono UserFloat extra
             dxy    = Var("dB('PV2D')", float, doc="dxy (with sign) wrt PV[0]", precision=12),
             dxyErr = Var("edB('PV2D')", float, doc="dxy uncertainty", precision=12),
             dz     = Var("dB('PVDZ')", float, doc="dz (with sign) wrt PV[0]", precision=12),
@@ -255,7 +254,6 @@ def setupTau3Mu(process, isMC):
             genPartPdgId = Var("userInt('mcMatch')" if isMC else "0", int),
             
             # --- Isolation (Standard) ---
-            # Queste funzionano quasi sempre perché calcolate dai depositi nel rivelatore
             pfRelIso03_all = Var("(pfIsolationR03().sumChargedHadronPt + max(pfIsolationR03().sumNeutralHadronEt + pfIsolationR03().sumPhotonEt - pfIsolationR03().sumPUPt/2,0.0))/pt", float),
             pfRelIso04_all = Var("(pfIsolationR04().sumChargedHadronPt + max(pfIsolationR04().sumNeutralHadronEt + pfIsolationR04().sumPhotonEt - pfIsolationR04().sumPUPt/2,0.0))/pt", float),
             
@@ -267,7 +265,7 @@ def setupTau3Mu(process, isMC):
             sumPt03 = Var("isolationR03().sumPt", float, doc="Tracker isolation sumPt in dR=0.3"),
             sumPt05 = Var("isolationR05().sumPt", float, doc="Tracker isolation sumPt in dR=0.5"),
 
-            # Numero di tracce in un cono di 0.3
+            # Number of tracks in a cone of 0.3
             nTracks03 = Var("isolationR03().nTracks", int, doc="Number of tracks in dR=0.3 tracker isolation cone"),
             nTracks05 = Var("isolationR05().nTracks", int, doc="Number of tracks in dR=0.5 tracker isolation cone"),
             # CombinedQuality Updated stats
@@ -372,18 +370,7 @@ def setupTau3Mu(process, isMC):
         name = cms.string("Trigger"), # Nome della tabella nel ROOT
         doc = cms.string("L1 and HLT bits for Tau3Mu analysis"),
         extension = cms.bool(False),
-        l1Seeds = cms.vstring(
-            "L1_TripleMu_5SQ_3SQ_0_DoubleMu_5_3_SQ_OS_Mass_Max9",
-            "L1_DoubleMu0er1p4_SQ_OS_dR_Max1p4",
-            "L1_DoubleMu0er1p5_SQ_OS_dR_Max1p4",
-            "L1_DoubleMu4_SQ_OS_dR_Max1p2",
-            "L1_DoubleMu4p5_SQ_OS_dR_Max1p2",
-            "L1_TripleMu_5SQ_3SQ_0OQ_DoubleMu_5_3_SQ_OS_Mass_Max9",
-            "L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p6",
-            "L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p5",
-            "L1_TripleMu_2SQ_1p5SQ_0OQ_Mass_Max12",
-            "L1_TripleMu_3SQ_2p5SQ_0OQ_Mass_Max12"
-        ),
+        l1Seeds = L1_path_list,
         hltPaths = HLT_path_list
     )
 
