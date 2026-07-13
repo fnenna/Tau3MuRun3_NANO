@@ -1,0 +1,13 @@
+# e.g. condor_submit year=2024 submit_analysis.sub
+executable     = run_analysis.sh
+arguments      = $(ClusterId) $(ProcId) $(year) $(era) 0
+output         = logs/analysis.$(era).s0.$(ClusterId).$(ProcId).out
+error          = logs/analysis.$(era).s0.$(ClusterId).$(ProcId).err
+log            = logs/analysis.log
+request_cpus   = 4
+request_memory = 64GB
+
+eras_2024      = B C D E-v1 E-v2 F G H I-v1 I-v2
+eras_2025      = B C-v1 C-v2 D E F-v1 F-v2 G
+
+queue era in $(eras_$(year))

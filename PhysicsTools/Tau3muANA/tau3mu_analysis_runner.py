@@ -6,6 +6,8 @@ from dask.distributed import Client, LocalCluster
 from dask_jobqueue.htcondor import HTCondorCluster
 import dsPhiPi_analyser as analysis_control
 import tau3mu_analyser as analysis_signal
+import pandas as pd
+import numpy as np
 
 import os
 import logging
@@ -14,76 +16,105 @@ import warnings
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
-def run_analysis(era: str, stream: str, analysis_type: str, dataset_name: str, n_workers: int):
+
+def run_analysis(year: str, era: str, analysis_type: str, output_dir: str, n_workers: int, isMC: bool, csv_path: str = "file_paths.csv"):
+    """
+    Runs the analysis by automatically detecting available streams from the CSV manifest.
+    """
     print(f"Analysis type: {analysis_type}")
-    print(f"Dataset name: {dataset_name}")
-    print(f"Era: {era}")
-    print(f"Stream: {stream}")
+    print(f"Dataset name: {output_dir}")
+    print(f"Year: {year} | Era: {era}")
 
+    # 1. Load the file manifest
+    try:
+        df_all = pd.read_csv(csv_path)
+    except FileNotFoundError:
+        print(f"Error: The manifest file '{csv_path}' was not found.")
+        return
 
-    print("Starting control channel analysis on data...")
+    # 2. Extract unique streams from the CSV for the selected year and era
+    # We filter first to ensure we only get streams that actually have data for this year/era
+    initial_mask = (df_all['year'].astype(str) == str(year)) & (df_all['era'] == era)
+    available_streams = np.unique(df_all[initial_mask]['stream'])
 
-    pattern = f"/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass{stream}/SkimDsPhiPi_2024era{era}_stream*_Mini_v4/*/00*/Tree_PhiPi_*.root"
-    #pattern = f'/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass{stream}/SkimTau3mu_2024era{era}_stream*_Mini_v4/*/00*/TreeData_*.root'
-    #pattern = f'/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass0/SkimTau3mu_2024eraB_stream*_Mini_v4/*/00*/TreeData_*.root'
-    #pattern = f'/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass0/SkimTau3mu_2024eraB_stream0_Mini_v4/*/0000/TreeData_1.root'
+    if len(available_streams) == 0:
+        print(f"No data found in manifest for Year {year} and Era {era}.")
+        return
 
-    #pattern = f"/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass*/SkimDsPhiPi_2024era{era}_stream0_Mini_v4/*/00*/Tree_PhiPi_*.root"
+    print(f"Detected streams in CSV: {available_streams}")
 
+    # 3. Loop over the detected streams
+    for stream in available_streams:
+        print(f"\n" + "="*60)
+        print(f"STARTING PROCESSING FOR STREAM: {stream}")
+        print("="*60)
 
+        # 4. Filter data for the specific stream
+        if isMC:
+            base_fileout = f"{analysis_type}_{output_dir}_isMC"
+        else:
+            mask = (
+                (df_all['year'].astype(str) == str(year)) & 
+                (df_all['era'] == era) & 
+                (df_all['stream'] == int(stream))
+            )
+            base_fileout = f"{analysis_type}_{output_dir}_{year}_{era}_{stream}"
 
-    #files = {f: "Tree3Mu/ntuple;1" for f in filelist}
-    if analysis_type == "data_control":
-        #pattern = f"/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass{stream}/SkimDsPhiPi_2024era{era}_stream*_Mini_v4/*/00*/Tree_PhiPi_*.root"
-        #filelist = glob.glob(pattern)
-        #if not filelist:
-        #    print(f"No ROOT files found with pattern:\n{pattern}")
-        #    return
-        #files = [f"{f}:Tree3Mu/ntuple" for f in filelist]
-        file = "/eos/home-f/fnenna/tau3mu_run3/CMSSW_15_0_0/src/PhysicsTools/Tau3muNANO/test/nano_2mu1trk_testData.root:Events"
+        df_filtered = df_all[mask]
 
-    elif analysis_type == "data_signal":
-        #pattern = f'/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass{stream}/SkimTau3mu_2024era{era}_stream*_Mini_v4/*/00*/TreeData_*.root'
-        #filelist = glob.glob(pattern)
-        #if not filelist:
-        #    print(f"No ROOT files found with pattern:\n{pattern}")
-        #    return
-        #files = [f"{f}:TreeMakerBkg/ntuple" for f in filelist]
-        file = "/eos/home-f/fnenna/tau3mu_run3/CMSSW_15_0_0/src/PhysicsTools/Tau3muNANO/test/tau3mu_test_outputMC.root:Events"
-    else:
-        print("Unsupported analysis type. Currently only 'data_control' is implemented.")
+        # 5. Iterate over the groups for this specific stream
+        # Using .groupby('group') handles the smart division automatically
+        for group_id, group_data in df_filtered.groupby('group'):
+            num_files = len(group_data)
+            print(f"\n--- Stream {stream} | Group: {group_id} ({num_files} files) ---")
+            
+            filelist = group_data['path'].tolist()
+            files = [f"{f}:Events" for f in filelist]
+            
+            current_fileout = f"{base_fileout}_group{group_id}"
 
+            # 6. Initialize Dask processing
+            try:
+                events = uproot.dask(files, open_files=False)
+                events = events.repartition(npartitions=n_workers).persist()
+                print(f"Dask initialized with {n_workers} partitions.")
 
-    #events = uproot.dask(files, open_files=False)
-    events = uproot.dask(file, open_files=False)
-    events = events.repartition(npartitions=n_workers).persist() #Riduci da 978 a 100
+                # 7. Execute specific Analysis modules
+                if analysis_type == "control":
+                    print(f"Running DsPhiPi analysis -> {current_fileout}")
+                    analysis_control.Analysis_DsPhiPi(events, output_dir, current_fileout, year, era, stream, isMC)
+                    
+                elif analysis_type == "signal":
+                    print(f"Running Tau3Mu analysis -> {current_fileout}")
+                    analysis_signal.Analysis_Tau3Mu(events, output_dir, current_fileout, era, stream, isMC)
+                    
+                else:
+                    print(f"Error: Unsupported analysis type '{analysis_type}'.")
+                    return 
 
-    #print(f"{len(filelist)} files loaded. Repartitioning with {n_workers} workers.")
+            except Exception as e:
+                print(f"An error occurred in Stream {stream}, Group {group_id}: {e}")
+                continue
 
-
-    fileout = f"{analysis_type}_{dataset_name}_{era}_{stream}"
-    if analysis_type == "data_control":
-        analysis_control.Analysis_DsPhiPi(events, dataset_name, fileout, era, stream)
-    elif analysis_type == "data_signal":
-        analysis_signal.Analysis_Tau3Mu(events, dataset_name, fileout, era, stream)
-    else:
-        print("Unsupported analysis type. Currently only 'data_control' is implemented.")
+    print("\n" + "="*60)
+    print("Full analysis pipeline finished for all detected streams.")
+    print("="*60)
 
 
 def main():
     start = time.time()
     parser = argparse.ArgumentParser(
-        prog='DsPhiPiAnalysis',
-        description='Run analysis on tau → 3μ control channel (Ds→ϕπ)',
-        epilog='Example usage: python3 run_analysis_dask_dsPhiPi.py -e B -t data_control -o DsPhiPi -c 1 -w 70 -j 20'
+        prog='Analysis runner for signal channel (tau → 3μ) or control channel (Ds→ϕπ)',
+        description='Run analysis on tau → 3μ/ Ds → ϕπ',
+        epilog='Example usage: python3 run_analysis_dask_dsPhiPi.py -e B -t control --isMC -o {} -w 70'
     )
+    parser.add_argument('-y', '--year', required=True, help='Data-taking year (e.g., 2024, 2025, etc.)')
     parser.add_argument('-e', '--era', required=True, help='Data-taking era (e.g., B, C, D, E-v1, etc.)')
-    parser.add_argument('-s', '--stream', required=True, help='Data-taking era (e.g., 0-7)')
-    parser.add_argument('-t', '--type', required=True, choices=['data_control', 'data_signal'], help='Type of analysis')
+    parser.add_argument('-s', '--stream', required=True, help='Data-taking stream (e.g., 0-7)')
+    parser.add_argument('-t', '--type', required=True, choices=['control', 'signal'], help='Type of analysis')
+    parser.add_argument('--isMC', action='store_true', help='Analyze Monte Carlo if present, otherwise analyze data')
     parser.add_argument('-o', '--output', required=True, help='Prefix for the output directory or file')
-    #parser.add_argument('-c', '--n_cores', required=True, type=int, help='Number of Dask workers to use')
     parser.add_argument('-w', '--n_workers', required=True, type=int, help='Number of Dask workers to use, e.g. 100')
-    #parser.add_argument('-j', '--max_number_of_jobs', required=True, type=int, help='Maximum number of HTCondor jobs')
 
     args = parser.parse_args()
     
@@ -98,7 +129,9 @@ def main():
     
     print(f"Dashboard disponibile al link: {cluster.dashboard_link}")
 
-    run_analysis(args.era, args.stream, args.type, args.output, args.n_workers)
+    file_summary = f"filePaths_{args.type}_{'MC' if args.isMC else 'Data'}_{args.year}.csv"
+
+    run_analysis(args.year,args.era, args.type, args.output, args.n_workers, isMC = args.isMC, csv_path=file_summary)
 
     print("Cleaning up client and cluster...")
     client.close()
@@ -106,7 +139,6 @@ def main():
     
     stop = time.time()
     proc_time = stop - start
-    #print(f"{proc_time:.1f}s is total processing time with {args.n_cores} cores, {args.n_workers} workers and {args.max_number_of_jobs} jobs")
     print(f"{proc_time:.1f}s is total processing time with {args.n_workers} workers")
 
 
