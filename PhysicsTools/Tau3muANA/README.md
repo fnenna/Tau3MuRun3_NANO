@@ -62,14 +62,6 @@ This script automatically divides files into **balanced groups of 100** (with cu
 | `--isMC` | Flag to enable Monte Carlo path matching | *Omit for Collision Data* |
 | `--era` | Limits the scan to a single specific era (Optional) | `B`, `C-v1`, `D`, ... |
 
-### Example Command:
-
-```bash
-python3 file_finder.py --year 2025 --type control --era D
-
-```
-
-This command outputs a structured CSV file named `filePaths_control_Data_2025.csv` containing the explicit file paths, stream allocations, and predefined processing groups.
 
 ---
 
