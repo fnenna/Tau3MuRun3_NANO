@@ -46,14 +46,12 @@ pip install -r requirements.txt
 
 ## 📅 Pre-processing: File Mapping & Grouping
 
-Before running the core analysis, you should generate a dataset mapping file using `file_finder.py`. This script automatically divides files into **balanced groups of 100** (with custom tail thresholds) to prevent job skew and ensure an efficient workload distribution across HTCondor/Dask workers.
-
-### Command Syntax:
-
+Before running the core analysis, you should generate a dataset mapping file using `file_finder.py`:
 ```bash
 python3 file_finder.py --year <year> --type <type> [--isMC] [--era <era>]
 
 ```
+This script automatically divides files into **balanced groups of 100** (with custom tail thresholds) to prevent job skew and ensure an efficient workload distribution across HTCondor/Dask workers.
 
 ### Arguments:
 
