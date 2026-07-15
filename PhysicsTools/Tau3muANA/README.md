@@ -93,6 +93,7 @@ Replace [dask_worker_node] with the specific hostname/IP where the Dask master s
 
 Once the tunnel is active, open your browser and navigate to:
 http://localhost:8787
+
 ---
 
 ## 📊 Output
