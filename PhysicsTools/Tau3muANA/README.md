@@ -1,12 +1,12 @@
 # HF Tau3Mu Analysis Framework
 
-This framework is designed for analyzing customized **NANOAOD ntuples** for Heavy Flavor (HF) studies, specifically targeting the $B \to \tau(\to 3\mu)\nu$ and $D_s \to \phi(\to \mu\mu)\pi$ channels.
+This framework is designed for analyzing customized **NANOAOD ntuples** for Heavy Flavor (HF) studies, specifically targeting the HF $\tau(\to 3\mu)$ and $D_s \to \phi(\to \mu\mu)\pi$ channels.
 
 ## 📁 Repository Structure
 
 * **`tau3mu_analysis_runner.py`**: The main entry point. It manages the Dask cluster initialization and distributes the workload.
-* **`tau3mu_analyser.py`**: Contains the logic and selection cuts for the 3-muon ($3\mu$) final state.
-* **`dsPhiPi_analyser.py`**: Contains the logic and selection cuts for the 2-muon + 1-track ($2\mu + 1\text{tr}$) final state.
+* **`tau3mu_analyser.py`** (preliminary): Contains the logic and selection cuts for the 3-muon ($3\mu$) final state.
+* **`dsPhiPi_analyser.py`**: Contains the logic and selection cuts for the $2\mu + 1\text{tr}$ final state.
 * **`file_finder.py`**: A pre-processing utility script that scans storage directories, filters by year/era, and maps file paths into an optimized CSV grouped into chunks of 100 files for better job distribution.
 * **`requirements.txt`**: List of required Python packages (Uproot, Awkward, Dask, etc.).
 
@@ -30,11 +30,6 @@ pip install --upgrade pip
 pip install -r requirements.txt
 
 ```
-
-
-
-> **Note:** If you are running on a cluster, ensure that `PYTHONPATH` is correctly managed to prioritize the virtual environment over system libraries.
-
 ---
 
 ## 📅 Pre-processing: File Mapping & Grouping
