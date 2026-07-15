@@ -82,8 +82,7 @@ def run_analysis(year: str, era: str, analysis_type: str, output_dir: str, n_wor
                 # 7. Execute specific Analysis modules
                 if analysis_type == "control":
                     print(f"Running DsPhiPi analysis -> {current_fileout}")
-                    analysis_control.Analysis_DsPhiPi(events, output_dir, current_fileout, year, era, stream, isMC)
-                    
+                    analysis_control.Analysis_DsPhiPi(events, output_dir, current_fileout, era, isMC)
                 elif analysis_type == "signal":
                     print(f"Running Tau3Mu analysis -> {current_fileout}")
                     analysis_signal.Analysis_Tau3Mu(events, output_dir, current_fileout, era, stream, isMC)
@@ -110,7 +109,6 @@ def main():
     )
     parser.add_argument('-y', '--year', required=True, help='Data-taking year (e.g., 2024, 2025, etc.)')
     parser.add_argument('-e', '--era', required=True, help='Data-taking era (e.g., B, C, D, E-v1, etc.)')
-    parser.add_argument('-s', '--stream', required=True, help='Data-taking stream (e.g., 0-7)')
     parser.add_argument('-t', '--type', required=True, choices=['control', 'signal'], help='Type of analysis')
     parser.add_argument('--isMC', action='store_true', help='Analyze Monte Carlo if present, otherwise analyze data')
     parser.add_argument('-o', '--output', required=True, help='Prefix for the output directory or file')
@@ -129,7 +127,7 @@ def main():
     
     print(f"Dashboard disponibile al link: {cluster.dashboard_link}")
 
-    file_summary = f"filePaths_{args.type}_{'MC' if args.isMC else 'Data'}_{args.year}.csv"
+    file_summary = f"filePaths_{args.type}_{'MC' if args.isMC else 'Data'}_{args.year}_era{args.era}.csv"
 
     run_analysis(args.year,args.era, args.type, args.output, args.n_workers, isMC = args.isMC, csv_path=file_summary)
 

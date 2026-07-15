@@ -11,7 +11,7 @@ patterns = {
     "control": {
         True:  {"2024": "/path/to/mc/control/2024/*", "2025": "/path/to/mc/control/2025/*"},
         False: {"2024": "/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass{stream}/SkimDsPhiPi_2024era{era}_stream{stream}_Mini_v4/260602_*/00*/dsphipi_output_Data_*.root",
-                "2025": "/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass{stream}/SkimDsPhiPi_2025era{era}_stream{stream}_Mini_v4/26052*/00*/dsphipi_output_Data_*.root"}
+                "2025": "/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass{stream}/SkimDsPhiPi_2025era{era}_stream{stream}_Mini_v4/260714*/00*/dsphipi_output_Data_*.root"}
     }
 }
 
@@ -73,7 +73,10 @@ for era in eras_to_process:
             })
 
 df = pd.DataFrame(data_list)
-output_name = f"filePaths_{args.type}_{'MC' if args.isMC else 'Data'}_{args.year}.csv"
+if args.era:
+    output_name = f"filePaths_{args.type}_{'MC' if args.isMC else 'Data'}_{args.year}_era{args.era}.csv"
+else:
+    output_name = f"filePaths_{args.type}_{'MC' if args.isMC else 'Data'}_{args.year}.csv"
 df.to_csv(output_name, index=False)
 
 if not df.empty:

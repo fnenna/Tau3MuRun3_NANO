@@ -44,11 +44,11 @@ def process_tau3mu_events(sub_df, isMC):
     cutflow_lazy = {}
     
     # CUT 0 : Before cuts - skip event if no good triplets
-    AnyTriplets = sub_df.nTau2MuTrk >= 0
+    AnyTriplets = sub_df.nCand2MuTrk >= 0
     cutflow_lazy["BeforeCuts"] = dak.sum(AnyTriplets)
     
     # Save the number of events that have good triplets
-    GoodTriplets = (sub_df.nTau2MuTrk >= 1)
+    GoodTriplets = (sub_df.nCand2MuTrk >= 1)
     sub_df = sub_df[GoodTriplets]
     
     # CUT 1 : Check L1 and HLT decision
@@ -90,13 +90,13 @@ def process_tau3mu_events(sub_df, isMC):
     for mu_idx in range(2):
         for i in range(len(columns_old)):
             if "Muon" in columns_old[i] and columns_old[i]!="nMuon":
-                sub_df[f"{columns_old[i]}_{mu_idx+1}"] = sub_df[f"{columns_old[i]}"][sub_df[f"Tau2MuTrk_mu{mu_idx+1}_idx"]]
+                sub_df[f"{columns_old[i]}_{mu_idx+1}"] = sub_df[f"{columns_old[i]}"][sub_df[f"Cand2MuTrk_mu{mu_idx+1}_idx"]]
     for i in range(len(columns_old)):
         if "Track_" in columns_old[i] and columns_old[i]!="nTrack":
-            sub_df[f"{columns_old[i]}_tr"] = sub_df[f"{columns_old[i]}"][sub_df[f"Tau2MuTrk_tr_idx"]]
+            sub_df[f"{columns_old[i]}_tr"] = sub_df[f"{columns_old[i]}"][sub_df[f"Cand2MuTrk_tr_idx"]]
             
     # --- Combined Quality Variables (CombinedQuality) ---
-    scalar_fields = ['run', 'luminosityBlock', 'event', 'nMuon', 'nTrack', 'nTau2MuTrk', 'L1seed', 'HLTpath', 'isMC']
+    scalar_fields = ['run', 'luminosityBlock', 'event', 'nMuon', 'nTrack', 'nCand2MuTrk', 'L1seed', 'HLTpath', 'isMC']
     if isMC>0:
         scalar_fields += ["Pileup_nPU"]
     else:
@@ -185,7 +185,7 @@ def process_tau3mu_events(sub_df, isMC):
     acceptance = muon_acceptance & track_acceptance
 
     # Vertex significance cut
-    pv_sv_significance_cut = (sub_df.Tau2MuTrk_flightDistBSSig >= 3.5)
+    pv_sv_significance_cut = (sub_df.Cand2MuTrk_flightDistBSSig >= 3.5)
 
     # Muon ID requirements
     muon_id = (
@@ -204,11 +204,11 @@ def process_tau3mu_events(sub_df, isMC):
     selected_fields = [
         col for col in dak.fields(sub_df)
         if (col not in columns_old) or (
-            ("Tau2MuTrk" in col) and (col != "nTau2MuTrk") and ("HLT" not in col)
+            ("Cand2MuTrk" in col) and (col != "nCand2MuTrk") and ("HLT" not in col)
         )
     ] 
 
-    tri_muon_mass_cut = ((sub_df.Tau2MuTrk_mass >= 1.62) & (sub_df.Tau2MuTrk_mass <= 2.1))
+    tri_muon_mass_cut = ((sub_df.Cand2MuTrk_mass >= 1.62) & (sub_df.Cand2MuTrk_mass <= 2.1))
     phi_mass_window = ((sub_df.DiMu12_Mass >= 0.98) & (sub_df.DiMu12_Mass <= 1.06))
 
     triggerMatch_1 = ((sub_df.Muon_HLT_DoubleMu3_TkMu_DsTau3Mu_v_1 + sub_df.Muon_HLT_DoubleMu3_Trk_Tau3mu_1 + sub_df.Muon_HLT_DoubleMu3_Trk_Tau3mu_NoL1Mass_v_1 + sub_df.Muon_HLT_DoubleMu4_3_LowMass_v_1 + sub_df.Muon_HLT_DoubleMu4_LowMass_Displaced_v_1 > 0)
@@ -231,8 +231,8 @@ def process_tau3mu_events(sub_df, isMC):
     for col in selected_fields:
         sub_df[col] = sub_df[col][base_cuts&phi_mass_window&tri_muon_mass_cut&triggerMatch_1&triggerMatch_2]
     
-    sub_df = sub_df[dak.num(sub_df.Tau2MuTrk_mass, axis=1) > 0]
-    sorted_idx = dak.argsort(sub_df["Tau2MuTrk_chi2"])
+    sub_df = sub_df[dak.num(sub_df.Cand2MuTrk_mass, axis=1) > 0]
+    sorted_idx = dak.argsort(sub_df["Cand2MuTrk_chi2"])
 
     # I select only one triplet, the lowest chi2 one
     for col in selected_fields:
