@@ -39,7 +39,7 @@ def setupDsPhiPi(process, isMC):
     process.selectedMuons = cms.EDFilter("PATMuonSelector",
         src = cms.InputTag("slimmedMuons"),
         cut = cms.string("pt > 2.0 && abs(eta) < 2.4 && (innerTrack().isNonnull) && (charge!=0) && (innerTrack().hitPattern().numberOfValidPixelHits()>0)"),
-        filter = cms.bool(True)                                
+        filter = cms.bool(True)
     )
 
     # Preliminary Filter: Require at least 2 selected muons
@@ -144,26 +144,23 @@ def setupDsPhiPi(process, isMC):
         bits           = cms.InputTag("TriggerResults", "", "HLT"),
         prescales      = cms.InputTag("patTrigger"),
         objects        = cms.InputTag("slimmedPatTrigger"),
-        maxdR_matching = cms.double(0.3), 
+        maxdR_matching = cms.double(0.3),
         muonSelection  = cms.string("pt > 2.0"), 
         HLTPaths       = HLT_path_list,
     )
 
     # --- 4. FLAT TABLES DEFINITION (NanoAOD Output) ---
 
-    # Tau Table: Stores triplet properties and vertex mass
+    # Cand Table: Stores triplet properties and vertex mass
     process.cand2mu1trTable = cms.EDProducer("SimpleCompositeCandidateFlatTableProducer",
         src = cms.InputTag("cand2mu1trBuilder"),
         name = cms.string("Cand2MuTrk"),
         variables = cms.PSet(
-        # Standard P4 del tripletto
         pt      = Var("pt", float),
         eta     = Var("eta", float),
         phi     = Var("phi", float),
         charge  = Var("charge", int),
 
-
-        # Indici originali
         mu1_idx = Var("userInt('mu1_idx')", int),
         mu2_idx = Var("userInt('mu2_idx')", int),
         tr_idx  = Var("userInt('tr_idx')", int),
@@ -193,12 +190,12 @@ def setupDsPhiPi(process, isMC):
         flightDistBSErr = Var("userFloat('flightDistBSErr')", float),
         flightDistBSSig = Var("userFloat('flightDistBSSig')", float),
         
-        # Refitted Kinematics (al vertice SV)
+        # Refitted Kinematics (SV fit)
         refit_mu1_pt = Var("userFloat('refit_mu1_pt')", float),
         refit_mu2_pt = Var("userFloat('refit_mu2_pt')", float),
         refit_tr_pt  = Var("userFloat('refit_tr_pt')", float),
         
-        # Impact Parameters (rispetto al PV refittato)
+        # Impact Parameters (PV refit)
         dxy_mu1 = Var("userFloat('dxy_mu1')", float),
         dxy_mu2 = Var("userFloat('dxy_mu2')", float),
         dxy_tr  = Var("userFloat('dxy_tr')", float),
@@ -214,14 +211,11 @@ def setupDsPhiPi(process, isMC):
         mu2_hp = Var("userInt('mu2_innerTrk_hp')", int),
         tr_hp  = Var("userInt('tr_innerTrk_hp')", int),
 
-        # --- Muon Matching (Solo per Muone 1 e 2) ---
-        # Stazione 1
         mu1_match1_dX = Var("userFloat('mu1_match1_dX')", float),
         mu1_match1_pullX = Var("userFloat('mu1_match1_pullX')", float),
         mu2_match1_dX = Var("userFloat('mu2_match1_dX')", float),
         mu2_match1_pullX = Var("userFloat('mu2_match1_pullX')", float),
         
-        # Stazione 2
         mu1_match2_dX = Var("userFloat('mu1_match2_dX')", float),
         mu1_match2_pullX = Var("userFloat('mu1_match2_pullX')", float),
         mu2_match2_dX = Var("userFloat('mu2_match2_dX')", float),
@@ -234,7 +228,7 @@ def setupDsPhiPi(process, isMC):
         )
     )
 
-    # Muon Table: Stores muon kinematics and gen-matching
+    # Muon Table: BPH specialized Muons
     process.TrgMatchMuonTable = cms.EDProducer("SimplePATMuonFlatTableProducer",
         src  = cms.InputTag("muonBPH", "SelectedMuons"),
         name = cms.string("Muon"),
@@ -249,7 +243,6 @@ def setupDsPhiPi(process, isMC):
             charge = Var("charge", int),
 
             # --- Impact Parameters (DXY, DZ) ---
-            # Usiamo i metodi standard di pat::Muon che non richiedono UserFloat extra
             dxy    = Var("dB('PV2D')", float, doc="dxy (with sign) wrt PV[0]", precision=12),
             dxyErr = Var("edB('PV2D')", float, doc="dxy uncertainty", precision=12),
             dz     = Var("dB('PVDZ')", float, doc="dz (with sign) wrt PV[0]", precision=12),
@@ -272,7 +265,6 @@ def setupDsPhiPi(process, isMC):
             decayType = Var("userInt('genOrigin')" if isMC else "0", int, doc = "0 if non matching, 1=Ds, 2=B, 3=Other"),
             
             # --- Isolation (Standard) ---
-            # Queste funzionano quasi sempre perché calcolate dai depositi nel rivelatore
             pfRelIso03_all = Var("(pfIsolationR03().sumChargedHadronPt + max(pfIsolationR03().sumNeutralHadronEt + pfIsolationR03().sumPhotonEt - pfIsolationR03().sumPUPt/2,0.0))/pt", float),
             pfRelIso04_all = Var("(pfIsolationR04().sumChargedHadronPt + max(pfIsolationR04().sumNeutralHadronEt + pfIsolationR04().sumPhotonEt - pfIsolationR04().sumPUPt/2,0.0))/pt", float),
             
