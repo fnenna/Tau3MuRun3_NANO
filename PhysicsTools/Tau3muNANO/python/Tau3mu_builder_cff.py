@@ -201,8 +201,8 @@ def setupTau3Mu(process, isMC):
         mu3_match2_pullX = Var("userFloat('mu3_match2_pullX')", float),
 
         isVetoResonance = Var("userInt('isVetoResonance')", int),
-        diMuVtxFit_bestProb = Var("userInt('diMuVtxFit_bestProb')", int),
-        diMuVtxFit_bestMass = Var("userInt('diMuVtxFit_bestMass')", int),
+        diMuVtxFit_bestProb = Var("userFloat('diMuVtxFit_bestProb')", float),
+        diMuVtxFit_bestMass = Var("userFloat('diMuVtxFit_bestMass')", float),
         )
     )
 
@@ -421,7 +421,7 @@ def setupTau3Mu(process, isMC):
         process.TrgMatchMuonTable +
         process.triggerTableTau3Mu +
         process.pvTable +
-        process.mypuTable +
+        process.puTable +
         process.trackTable
     )
 
