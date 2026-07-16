@@ -10,7 +10,7 @@ import vector
 vector.register_awkward()
 
 # Redirect standard error (stderr) to a file
-sys.stderr = open('errori_sistema.txt', 'w')
+sys.stderr = open('errors.txt', 'w')
 
 
 def DimuonMass(sub_df, first=1, second=2):
@@ -37,7 +37,7 @@ def DimuonMass(sub_df, first=1, second=2):
     return dak.where(sub_df[f"DiMu{first}{second}_charge"] != 0, 0, invariant_mass)
 
 
-def process_tau3mu_events(sub_df, isMC):
+def process_dsphipi_events(sub_df, isMC):
     HLT_adaptation = (sub_df.Trigger_HLT_DoubleMu3_Trk_Tau3mu==1)|(sub_df.Trigger_HLT_DoubleMu3_TkMu_DsTau3Mu_v==1)|(sub_df.Trigger_HLT_DoubleMu3_Trk_Tau3mu_NoL1Mass_v==1|(sub_df.Trigger_HLT_DoubleMu4_3_LowMass_v==1)|(sub_df.Trigger_HLT_DoubleMu4_LowMass_Displaced_v==1))
     sub_df = sub_df[HLT_adaptation]
     sub_df["isMC"] = isMC
@@ -258,9 +258,10 @@ def Analysis_DsPhiPi(tree, dataset_name, output_path, era, isMC):
             isMC=4
         else:
             isMC = 5  # Could be a flag used downstream in processing logic
+    isMC = 0
 
     # 1. Main logic execution
-    arrays, selection_cutflow_dict = process_tau3mu_events(tree, isMC=isMC)
+    arrays, selection_cutflow_dict = process_dsphipi_events(tree, isMC=isMC)
 
     # 2. Preparation of write jobs
     jobs = []
