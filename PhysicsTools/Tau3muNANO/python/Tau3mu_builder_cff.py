@@ -4,11 +4,8 @@ from PhysicsTools.NanoAOD.simpleGenParticleFlatTableProducer_cfi import simpleGe
 from PhysicsTools.NanoAOD.muons_cff import muonTable
 from PhysicsTools.NanoAOD.globalVariablesTableProducer_cfi import globalVariablesTableProducer
 
-isMC = True
 
-print(f"--- Running Tau3Mu Analysis in {'MC' if isMC else 'DATA'} mode ---")
-
-# --- 1. EVENT FILTERS (HLT & SKIMMING) ---
+# --- 0. TRIGGER PATHS ---
 
 HLT_path_list = cms.vstring(
         "HLT_DoubleMu3_Trk_Tau3mu", 
@@ -31,6 +28,7 @@ L1_path_list = cms.vstring(
             "L1_TripleMu_3SQ_2p5SQ_0OQ_Mass_Max12"
         )
 
+# --- 1. EVENT FILTERS (HLT & SKIMMING) ---
 def setupTau3Mu(process, isMC):
     # HLT Filter: Select events passing specific trigger paths
     process.hltFilter = cms.EDFilter("HLTHighLevel",
@@ -82,7 +80,7 @@ def setupTau3Mu(process, isMC):
             additionalPdgId = cms.int32(22),
         )
 
-        # Reco-to-Gen Matching
+        # Reco-to-Gen Matching: Match selected muons to gen-level muons
         process.muonGenMatch = cms.EDProducer("MCMatcher",
             src         = cms.InputTag("selectedMuons"),
             matched     = cms.InputTag("myFinalGenParticles"),
@@ -101,10 +99,10 @@ def setupTau3Mu(process, isMC):
             matching = cms.InputTag("muonGenMatch")
         )
 
-    # Determine the correct Muon source for subsequent modules
-    process.muonSrc = cms.InputTag("muonsWithMatch") if isMC else cms.InputTag("selectedMuons")
-
     # --- 3. CANDIDATE BUILDING & TREE CONSTRUCTION ---
+
+    # Define muon source based on MC/Data
+    muonSrc = cms.InputTag("muonsWithMatch") if isMC else cms.InputTag("selectedMuons")
 
     # Tau3Mu Signal Builder
     process.tau3muBuilder = cms.EDProducer("Tau3MuBuilder",
@@ -117,41 +115,27 @@ def setupTau3Mu(process, isMC):
 
     # BPH Muon Selector for Trigger Matching
     process.muonBPH = cms.EDProducer("MuonTriggerSelector",
-        muonCollection = muonSrc,                                                
+        muonCollection = muonSrc,
         bits           = cms.InputTag("TriggerResults", "", "HLT"),
         prescales      = cms.InputTag("patTrigger"),
         objects        = cms.InputTag("slimmedPatTrigger"),
         maxdR_matching = cms.double(0.3),
         muonSelection  = cms.string("pt > 2.0"), 
-        HLTPaths       = HLT_path_list
+        HLTPaths       = HLT_path_list,
     )
 
+    # --- 4. FLAT TABLES DEFINITION (NanoAOD Output) ---
 
-    # --- 4. FLAT TABLES DEFINITION (Output Tree) ---
-
-    # Tau3Mu Table: Signal variables
+    # Tau3Mu Table: Stores triplet properties and vertex mass
     process.tau3muTable = cms.EDProducer("SimpleCompositeCandidateFlatTableProducer",
         src = cms.InputTag("tau3muBuilder"),
         name = cms.string("Tau3Mu"),
         doc = cms.string("Tau to 3Mu candidates"),
         variables = cms.PSet(
-        # Standard triplet P4
         pt      = Var("pt", float),
         eta     = Var("eta", float),
         phi     = Var("phi", float),
         charge  = Var("charge", int),
-
-        mu1_pt  = Var("userFloat('mu1_pt')", float, doc="pt of the first muon"),
-        mu1_eta = Var("userFloat('mu1_eta')", float),
-        mu1_phi = Var("userFloat('mu1_phi')", float),
-
-        mu2_pt  = Var("userFloat('mu2_pt')", float, doc="pt of the second muon"),
-        mu2_eta = Var("userFloat('mu2_eta')", float),
-        mu2_phi = Var("userFloat('mu2_phi')", float),
-
-        mu3_pt  = Var("userFloat('mu3_pt')", float, doc="pt of the third muon"),
-        mu3_eta = Var("userFloat('mu3_eta')", float),
-        mu3_phi = Var("userFloat('mu3_phi')", float),
 
         mu1_idx = Var("userInt('mu1_idx')", int),
         mu2_idx = Var("userInt('mu2_idx')", int),
@@ -173,10 +157,14 @@ def setupTau3Mu(process, isMC):
         
         # Flight Distance & Displacement
         flightDist    = Var("userFloat('flightDist')", float),
+        flightDistErr = Var("userFloat('flightDistErr')", float),
         flightDistSig = Var("userFloat('flightDistSig')", float),
-        lxy_pv        = Var("userFloat('lxy_pv')", float),
-        distXYSig     = Var("userFloat('distXYSig')", float),
-        distBS        = Var("userFloat('flightDistBS')", float),
+        flightDistXY = Var("userFloat('flightDistXY')", float),
+        flightDistXYErr = Var("userFloat('flightDistXYErr')", float),
+        flightDistXYSig = Var("userFloat('flightDistXYSig')", float),
+        flightDistBS = Var("userFloat('flightDistBS')", float),
+        flightDistBSErr = Var("userFloat('flightDistBSErr')", float),
+        flightDistBSSig = Var("userFloat('flightDistBSSig')", float),
         
         # Refitted Kinematics (SV fit)
         refit_mu1_pt = Var("userFloat('refit_mu1_pt')", float),
@@ -190,6 +178,7 @@ def setupTau3Mu(process, isMC):
         
         mindca_iso = Var("userFloat('mindca_iso')", float),
         rel_iso    = Var("userFloat('relative_iso')", float),
+        cosPointingAngle = Var("userFloat('cosPointingAngle')", float),
         pointingAngle = Var("userFloat('pointingAngle')", float),
 
         # High Purity Flags
@@ -197,16 +186,13 @@ def setupTau3Mu(process, isMC):
         mu2_hp = Var("userInt('mu2_innerTrk_hp')", int),
         mu3_hp  = Var("userInt('mu3_innerTrk_hp')", int),
 
-        # --- Muon Matching (Solo per Muone 1 e 2) ---
-        # Station 1
         mu1_match1_dX = Var("userFloat('mu1_match1_dX')", float),
         mu1_match1_pullX = Var("userFloat('mu1_match1_pullX')", float),
         mu2_match1_dX = Var("userFloat('mu2_match1_dX')", float),
         mu2_match1_pullX = Var("userFloat('mu2_match1_pullX')", float),
         mu3_match1_dX = Var("userFloat('mu3_match1_dX')", float),
         mu3_match1_pullX = Var("userFloat('mu3_match1_pullX')", float),
-        
-        # Station 2
+
         mu1_match2_dX = Var("userFloat('mu1_match2_dX')", float),
         mu1_match2_pullX = Var("userFloat('mu1_match2_pullX')", float),
         mu2_match2_dX = Var("userFloat('mu2_match2_dX')", float),
@@ -215,6 +201,8 @@ def setupTau3Mu(process, isMC):
         mu3_match2_pullX = Var("userFloat('mu3_match2_pullX')", float),
 
         isVetoResonance = Var("userInt('isVetoResonance')", int),
+        diMuVtxFit_bestProb = Var("userInt('diMuVtxFit_bestProb')", int),
+        diMuVtxFit_bestMass = Var("userInt('diMuVtxFit_bestMass')", int),
         )
     )
 
@@ -265,10 +253,8 @@ def setupTau3Mu(process, isMC):
             sumPt03 = Var("isolationR03().sumPt", float, doc="Tracker isolation sumPt in dR=0.3"),
             sumPt05 = Var("isolationR05().sumPt", float, doc="Tracker isolation sumPt in dR=0.5"),
 
-            # Number of tracks in a cone of 0.3
             nTracks03 = Var("isolationR03().nTracks", int, doc="Number of tracks in dR=0.3 tracker isolation cone"),
             nTracks05 = Var("isolationR05().nTracks", int, doc="Number of tracks in dR=0.5 tracker isolation cone"),
-            # CombinedQuality Updated stats
             trkKink = Var("combinedQuality().trkKink", float),
             glbKink = Var("combinedQuality().glbKink", float),
             trkRelChi2 = Var("combinedQuality().trkRelChi2", float),
@@ -333,7 +319,7 @@ def setupTau3Mu(process, isMC):
         )
     )
 
-    # Track Table: Using PFCandidates
+    # --- Track Table: Stores comprehensive track parameters for PFCandidates ---
     process.trackTable = cms.EDProducer("SimplePFCandidateFlatTableProducer",
         src = cms.InputTag("packedPFCandidates"),
         cut = cms.string("pt > 2.5 && abs(eta) < 2.4 && hasTrackDetails()"), 
@@ -374,28 +360,21 @@ def setupTau3Mu(process, isMC):
         hltPaths = HLT_path_list
     )
 
-
-    # Vertex Table
-    process.pvTable = cms.EDProducer("SimpleVertexFlatTableProducer",
-        src = cms.InputTag("offlineSlimmedPrimaryVerticesWithBS"),
-        name = cms.string("PV"),
-        variables = cms.PSet(
-            x = Var("x", float, precision=10),
-            y = Var("y", float, precision=10),
-            z = Var("z", float, precision=10),
-            chi2 = Var("chi2", float, precision=8),
-        )
+    # BPH Vertex Table
+    process.pvTable = cms.EDProducer("PVertexBPHTable",
+    pvSrc = cms.InputTag("offlineSlimmedPrimaryVertices"),
+    goodPvCut = cms.string("!isFake && ndof > 4 && abs(z) <= 24 && position.Rho <= 2"), 
+    pvName = cms.string("PVtx")
     )
 
-    process.mypuTable = cms.EDProducer("NPUTablesProducer",
+    process.puTable = cms.EDProducer("NPUTablesProducer",
             src = cms.InputTag("slimmedAddPileupInfo"),
             pvsrc = cms.InputTag("offlineSlimmedPrimaryVertices"),
             zbins = cms.vdouble( [0.0,1.7,2.6,3.0,3.5,4.2,5.2,6.0,7.5,9.0,12.0] ),
             savePtHatMax = cms.bool(True),
     )
 
-
-    # Gen Particle Table (MC Only)
+    # Gen Particle Table: Stores MC truth information (Only if isMC)
     if isMC:
         process.myGenParticleTable = simpleGenParticleFlatTableProducer.clone(
             src = cms.InputTag("myFinalGenParticles"),
@@ -414,7 +393,7 @@ def setupTau3Mu(process, isMC):
             )
         )
 
-    # --- 5. EXECUTION SEQUENCE ---
+    # --- 5. FINAL EXECUTION SEQUENCE ---
 
     # Filter Sequence
     process.tau3muSequence = cms.Sequence(
@@ -425,7 +404,7 @@ def setupTau3Mu(process, isMC):
         process.ThreeMuonsCandFilter
     )
 
-    # Add MC modules if needed
+    # MC-specific modules
     if isMC:
         process.tau3muSequence += (
             process.myFinalGenParticles +
@@ -434,7 +413,7 @@ def setupTau3Mu(process, isMC):
             process.muonsWithMatch
         )
 
-    # Building and Table sequence
+    # Candidate construction and table filling
     process.tau3muSequence += (
         process.tau3muBuilder + 
         process.tau3muTable + 
@@ -446,5 +425,6 @@ def setupTau3Mu(process, isMC):
         process.trackTable
     )
 
+    # Append Gen Table if MC
     if isMC:
         process.tau3muSequence += process.myGenParticleTable
