@@ -85,7 +85,7 @@ def run_analysis(year: str, era: str, analysis_type: str, output_dir: str, n_wor
                     analysis_control.Analysis_DsPhiPi(events, output_dir, current_fileout, era, isMC)
                 elif analysis_type == "signal":
                     print(f"Running Tau3Mu analysis -> {current_fileout}")
-                    analysis_signal.Analysis_Tau3Mu(events, output_dir, current_fileout, era, stream, isMC)
+                    analysis_signal.Analysis_Tau3Mu(events, output_dir, current_fileout, era, isMC)
                     
                 else:
                     print(f"Error: Unsupported analysis type '{analysis_type}'.")
