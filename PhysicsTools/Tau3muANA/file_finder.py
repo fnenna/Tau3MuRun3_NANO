@@ -6,7 +6,7 @@ import numpy as np  # Fornp.arange
 patterns = {
     "signal": {
         True:  {"2024": "/path/to/mc/signal/2024/*", "2025": "/path/to/mc/signal/2025/*"},
-        False: {"2024": "/path/to/data/signal/2024/{era}/{stream}/*", "2025": "/path/to/data/signal/2025/{era}/{stream}/*"}
+        False: {"2024": "/path/to/data/signal/2024/{era}/{stream}/*", "2025": "/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass0/SkimTau3mu_2025eraB_stream0_Mini_v4/260717_*/00*/tau3mu_output_Data_*.root"}
     },
     "control": {
         True:  {"2024": "/path/to/mc/control/2024/*", "2025": "/path/to/mc/control/2025/*"},

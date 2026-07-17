@@ -201,8 +201,20 @@ def setupTau3Mu(process, isMC):
         mu3_match2_pullX = Var("userFloat('mu3_match2_pullX')", float),
 
         isVetoResonance = Var("userInt('isVetoResonance')", int),
-        diMuVtxFit_bestProb = Var("userFloat('diMuVtxFit_bestProb')", float),
-        diMuVtxFit_bestMass = Var("userFloat('diMuVtxFit_bestMass')", float),
+        diMuVtxFit_bestProb = Var("userFloat('diMuVtxFit_bestProb')", int),
+        diMuVtxFit_bestMass = Var("userFloat('diMuVtxFit_bestMass')", int),
+
+        dr12 = Var("userFloat('dr12')", float),
+        dr23 = Var("userFloat('dr23')", float),
+        dr13 = Var("userFloat('dr13')", float),
+        dr_max = Var("userFloat('dr_max')", float),
+        dz12 = Var("userFloat('dz12')", float),
+        dz23 = Var("userFloat('dz23')", float),
+        dz13 = Var("userFloat('dz13')", float),
+        dz_max = Var("userFloat('dz_max')", float),
+        d0 = Var("userFloat('d0')", float),
+        d0_sig = Var("userFloat('d0_sig')", float),
+        d0max_sig = Var("userFloat('d0max_sig')", float)
         )
     )
 

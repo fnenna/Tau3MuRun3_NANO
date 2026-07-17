@@ -2,10 +2,11 @@
 # Usage:
 #    submitAllJobs.sh
 
-helpstring="Usage: submitAllJobs.sh [Year] [isMC]"
+helpstring="Usage: submitAllJobs.sh [Year] [isMC] [channel]"
 
 year=$1
 MCflag=$2
+channel=$3
 
 if [ -z ${2+x} ]; then
     echo -e ${helpstring}
@@ -76,6 +77,6 @@ fi
 
 for i in "${era[@]}"; do
     echo -e "\nData $i"
-    python3 submit_CRAB.py --year ${year} --${type}era ${i} 
+    python3 submit_CRAB.py --year ${year} --${type}era ${i} --channel ${channel}
     sleep 1
 done

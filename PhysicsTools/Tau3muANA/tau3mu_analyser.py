@@ -96,9 +96,9 @@ def process_tau3mu_events(sub_df, isMC):
     for mu_idx in range(3):
         for i in range(len(columns_old)):
             if "Muon" in columns_old[i] and columns_old[i]!="nMuon":
-                sub_df[f"{columns_old[i]}_{mu_idx+1}"] = sub_df[f"{columns_old[i]}"][sub_df[f"Cand2MuTrk_mu{mu_idx+1}_idx"]]
+                sub_df[f"{columns_old[i]}_{mu_idx+1}"] = sub_df[f"{columns_old[i]}"][sub_df[f"Tau3Mu_mu{mu_idx+1}_idx"]]
     # --- Combined Quality Variables (CombinedQuality) ---
-    scalar_fields = ['run', 'luminosityBlock', 'event', 'nMuon', 'nTrack', 'nCand2MuTrk', 'L1seed', 'HLTpath', 'isMC']
+    scalar_fields = ['run', 'luminosityBlock', 'event', 'nMuon', 'nTrack', 'nTau3Mu', 'L1seed', 'HLTpath', 'isMC']
     if isMC>0:
         scalar_fields += ["Pileup_nPU"]
     else:
@@ -256,8 +256,7 @@ def process_tau3mu_events(sub_df, isMC):
     cutflow_lazy["TriMuonMassCut"] = dak_tri_mass
     dak_trigger_match1 = dak.sum(dak.any(base_cuts&dr_dz_sign&tri_muon_mass_cut&triggerMatch_1, axis=1))
     cutflow_lazy["TriggerMatch1"] = dak_trigger_match1  
-    trigger_match = dak.any(base_cuts&dr_dz_sign&tri_muon_mass_cut&triggerMatch_1&triggerMatch_2, axis=1)
-    dak_trigger_match2 = dak.sum(trigger_match)  
+    dak_trigger_match2 = dak.sum(dak.any(base_cuts&dr_dz_sign&tri_muon_mass_cut&triggerMatch_1&triggerMatch_2, axis=1))  
     cutflow_lazy["TriggerMatch12"] = dak_trigger_match2
     dak_trigger_match3 = dak.sum(dak.any(base_cuts&dr_dz_sign&tri_muon_mass_cut&triggerMatch_1&triggerMatch_2&triggerMatch_3, axis=1)) 
     cutflow_lazy["TriggerMatch123"] = dak_trigger_match3
