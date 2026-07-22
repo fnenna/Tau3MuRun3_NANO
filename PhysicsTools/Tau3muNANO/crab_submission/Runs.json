@@ -77,8 +77,8 @@
         
         "MC_era": ["MC_DsPhiPi"],
         "MC_input_type": ["global"],
-        "MC_GTs": [],
-        "MC_datasets": [
+        "MC_GTs": ["150X_mcRun3_2024_realistic_v2"],
+        "MC_datasets": ["/DstoPhiPi-Phito2Mu_Fil-Mu_TuneCP5_13p6TeV_pythia8-evtgen/RunIII2024Summer24MiniAODv6-150X_mcRun3_2024_realistic_v2-v3/MINIAODSIM"
         ]
     }
 

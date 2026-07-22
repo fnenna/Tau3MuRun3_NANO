@@ -3,7 +3,7 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 
 // Definiamo esplicitamente il tipo per pat::CompositeCandidate
-typedef SimpleFlatTableProducer<pat::CompositeCandidate> SimpleCompositeCandidateFlatTableProducer;
+typedef SimpleFlatTableProducer<pat::CompositeCandidate> MySimpleCompositeCandidateFlatTableProducer;
 
 // Registriamo il modulo nel framework
-DEFINE_FWK_MODULE(SimpleCompositeCandidateFlatTableProducer);
+DEFINE_FWK_MODULE(MySimpleCompositeCandidateFlatTableProducer);

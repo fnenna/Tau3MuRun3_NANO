@@ -152,7 +152,7 @@ def setupDsPhiPi(process, isMC):
     # --- 4. FLAT TABLES DEFINITION (NanoAOD Output) ---
 
     # Cand Table: Stores triplet properties and vertex mass
-    process.cand2mu1trTable = cms.EDProducer("SimpleCompositeCandidateFlatTableProducer",
+    process.cand2mu1trTable = cms.EDProducer("MySimpleCompositeCandidateFlatTableProducer",
         src = cms.InputTag("cand2mu1trBuilder"),
         name = cms.string("Cand2MuTrk"),
         variables = cms.PSet(
@@ -343,7 +343,7 @@ def setupDsPhiPi(process, isMC):
     )
 
     # --- Track Table: Stores comprehensive track parameters for PFCandidates ---
-    process.trackTable = cms.EDProducer("SimplePFCandidateFlatTableProducer",
+    process.trackTable = cms.EDProducer("MySimplePFCandidateFlatTableProducer",
         src = cms.InputTag("selectedTracks"),
         name = cms.string("Track"),
         variables = cms.PSet(

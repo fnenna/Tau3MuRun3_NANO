@@ -127,7 +127,7 @@ def setupTau3Mu(process, isMC):
     # --- 4. FLAT TABLES DEFINITION (NanoAOD Output) ---
 
     # Tau3Mu Table: Stores triplet properties and vertex mass
-    process.tau3muTable = cms.EDProducer("SimpleCompositeCandidateFlatTableProducer",
+    process.tau3muTable = cms.EDProducer("MySimpleCompositeCandidateFlatTableProducer",
         src = cms.InputTag("tau3muBuilder"),
         name = cms.string("Tau3Mu"),
         doc = cms.string("Tau to 3Mu candidates"),
@@ -332,7 +332,7 @@ def setupTau3Mu(process, isMC):
     )
 
     # --- Track Table: Stores comprehensive track parameters for PFCandidates ---
-    process.trackTable = cms.EDProducer("SimplePFCandidateFlatTableProducer",
+    process.trackTable = cms.EDProducer("MySimplePFCandidateFlatTableProducer",
         src = cms.InputTag("packedPFCandidates"),
         cut = cms.string("pt > 2.5 && abs(eta) < 2.4 && hasTrackDetails()"), 
         name = cms.string("Track"),

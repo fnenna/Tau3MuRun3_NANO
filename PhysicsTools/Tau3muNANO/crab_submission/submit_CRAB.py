@@ -83,6 +83,46 @@ if __name__ == "__main__":
 
     # --- case: isMC = True ---
     elif MCera != None:
-        # ... (stessa logica applicata anche qui usando dir_name)
-        # Assicurati di usare {dir_name} invece di {year}_{MCera}
-        pass
+        era_index = data["MC_era"].index(MCera) if MCera in data["MC_era"] else None
+        if era_index == None:
+            print(f"WARNING: {MCera} is not in the list of MC_eras. Please check.")
+            exit()
+            
+        MC_input_type = data["MC_input_type"][era_index]
+        globaltag = data["MC_GTs"][era_index]
+        MC_datasets = data["MC_datasets"][era_index]
+
+
+        command = f"""
+        directory="$PWD";
+        pathtoskimfile="$directory/../test";
+        mkdir -p "{dir_name}"; 
+        echo "MC {year} - {MCera} is selected"; 
+        
+        path_cfg="$directory/{dir_name}/PatAndTree_cfg.py";
+        cp "$pathtoskimfile/{config_file}" "$path_cfg";
+        
+        # Replace with Global Tag MC
+        sed -i "s#140X_mcRun3_2024_realistic_v26#{globaltag}#g" "$path_cfg";
+        
+        # Force isMC = True
+        sed -i "s#options.register('isMC', False#options.register('isMC', True#g" "$path_cfg";
+        """
+        subprocess.run(command, shell=True, check=True)
+
+        command = f"""
+        directory="$PWD";
+        path="$directory/{dir_name}/PatAndTree_cfg.py";
+        cp templates/CRAB_template_MC.py "{dir_name}/CRAB_MC.py";
+        sed -i "s#CHANNELNAME#{channel_name}#g" "{dir_name}/CRAB_MC.py";
+        sed -i "s#YEAR#{year}#g" "{dir_name}/CRAB_MC.py";
+        sed -i "s#ERANAME#{MCera}#g" "{dir_name}/CRAB_MC.py";
+        sed -i "s#DATASET_NAME#{MC_datasets}#g" "{dir_name}/CRAB_MC.py";
+        sed -i "s#FILE_TO_SUBMIT_PATH#$path#g" "{dir_name}/CRAB_MC.py";
+        sed -i "s#INPUT_TYPE#{MC_input_type}#g" "{dir_name}/CRAB_MC.py";
+        
+        cd "{dir_name}";
+        crab submit -c "CRAB_MC.py";
+        cd ..;
+        """
+        subprocess.run(command, shell=True, check=True)
