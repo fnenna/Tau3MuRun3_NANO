@@ -38,8 +38,7 @@ def DimuonMass(sub_df, first=1, second=2):
 
 
 def process_dsphipi_events(sub_df, isMC):
-    HLT_adaptation = (sub_df.Trigger_HLT_DoubleMu3_Trk_Tau3mu==1)|(sub_df.Trigger_HLT_DoubleMu3_TkMu_DsTau3Mu_v==1)|(sub_df.Trigger_HLT_DoubleMu3_Trk_Tau3mu_NoL1Mass_v==1|(sub_df.Trigger_HLT_DoubleMu4_3_LowMass_v==1)|(sub_df.Trigger_HLT_DoubleMu4_LowMass_Displaced_v==1))
-    sub_df = sub_df[HLT_adaptation]
+    sub_df = sub_df
     sub_df["isMC"] = isMC
     cutflow_lazy = {}
     
