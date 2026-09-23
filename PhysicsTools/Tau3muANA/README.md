@@ -1,12 +1,12 @@
 # HF Tau3Mu Analysis Framework
 
-This framework is designed for analyzing customized **NANOAOD ntuples** for Heavy Flavor (HF) studies, specifically targeting the $B \to \tau(\to 3\mu)\nu$ and $D_s \to \phi(\to \mu\mu)\pi$ channels.
+This framework is designed for analyzing customized **NANOAOD ntuples** for Heavy Flavor (HF) studies, specifically targeting the HF $\tau(\to 3\mu)$ and $D_s \to \phi(\to \mu\mu)\pi$ channels.
 
 ## 📁 Repository Structure
 
 * **`tau3mu_analysis_runner.py`**: The main entry point. It manages the Dask cluster initialization and distributes the workload.
-* **`tau3mu_analyser.py`**: Contains the logic and selection cuts for the 3-muon ($3\mu$) final state.
-* **`dsPhiPi_analyser.py`**: Contains the logic and selection cuts for the 2-muon + 1-track ($2\mu + 1\text{tr}$) final state.
+* **`tau3mu_analyser.py`** (preliminary): Contains the logic and selection cuts for the 3-muon ($3\mu$) final state.
+* **`dsPhiPi_analyser.py`**: Contains the logic and selection cuts for the $2\mu + 1\text{tr}$ final state.
 * **`file_finder.py`**: A pre-processing utility script that scans storage directories, filters by year/era, and maps file paths into an optimized CSV grouped into chunks of 100 files for better job distribution.
 * **`requirements.txt`**: List of required Python packages (Uproot, Awkward, Dask, etc.).
 
@@ -16,14 +16,7 @@ This framework is designed for analyzing customized **NANOAOD ntuples** for Heav
 
 To avoid conflicts with the CMSSW environment, it is highly recommended to use a **Python Virtual Environment**.
 
-1. **Initialize CMSSW (if needed):**
-```bash
-cmsenv
-
-```
-
-
-2. **Create and activate the virtual environment:**
+1. **Create and activate the virtual environment:**
 ```bash
 python3 -m venv my_dask_env
 source my_dask_env/bin/activate
@@ -31,17 +24,12 @@ source my_dask_env/bin/activate
 ```
 
 
-3. **Install dependencies:**
+2. **Install dependencies:**
 ```bash
 pip install --upgrade pip
 pip install -r requirements.txt
 
 ```
-
-
-
-> **Note:** If you are running on a cluster, ensure that `PYTHONPATH` is correctly managed to prioritize the virtual environment over system libraries.
-
 ---
 
 ## 📅 Pre-processing: File Mapping & Grouping
@@ -52,6 +40,7 @@ python3 file_finder.py --year <year> --type <type> [--isMC] [--era <era>]
 
 ```
 This script automatically divides files into **balanced groups of 100** (with custom tail thresholds) to prevent job skew and ensure an efficient workload distribution across HTCondor/Dask workers.
+Before running the script please provide in the `patterns` dictionary the exact directory where the files are saved.
 
 ### Arguments:
 
@@ -81,7 +70,6 @@ python3 tau3mu_analysis_runner.py -e <era> -s <stream> -t <type> -o <output_dir>
 | Flag | Description | Examples |
 | --- | --- | --- |
 | `-e` | Data-taking Era | `B`, `C`, `D` |
-| `-s` | Data-taking Stream | `0`, `1`, `2`, ... |
 | `-t` | Analysis Type | `data_signal`, `data_control`, `MC` |
 | `-o` | Output Directory | `output_v1`, `test_results` |
 | `-w` | Number of Workers | `4`, `8`, `16` (Dask parallelization) |
@@ -89,9 +77,22 @@ python3 tau3mu_analysis_runner.py -e <era> -s <stream> -t <type> -o <output_dir>
 ### Example Command:
 
 ```bash
-python3 tau3mu_analysis_runner.py -e 2022 -s ParkingDoubleMuonLowMass -t data_signal -o my_analysis_results -w 8
-
+python3 tau3mu_analysis_runner.py -y 2025 -e B -t control -o trial-for-git -w 100
 ```
+
+### Monitoring with Dask Dashboard
+When running the code, Dask will print the local link of the real-time monitoring dashboard in your terminal (e.g., http://127.0.0.1:8787/status).
+
+To access and visualize the dashboard securely from your local browser, set up an SSH Tunnel by running the following command in a new terminal window on your local machine:
+
+```bash
+ssh -L 8787:[dask_worker_node]:8787 [your_username]@[remote_cluster_frontend]
+```
+
+Replace [dask_worker_node] with the specific hostname/IP where the Dask master scheduler is running, and [your_username]@[remote_cluster_frontend] with your remote cluster login credentials.
+
+Once the tunnel is active, open your browser and navigate to:
+http://localhost:8787
 
 ---
 

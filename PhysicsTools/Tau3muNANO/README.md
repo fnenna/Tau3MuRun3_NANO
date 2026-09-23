@@ -1,30 +1,15 @@
 # Tau3Mu NanoAOD Analysis Workspace
 
-This workspace is dedicated to the production of **custom NanoAOD** for the $\tau \to 3\mu$ decay analysis for the HF channel. It includes C++ plugins for Level-1 (L1) trigger bit extraction and specific configurations for vertex fitting and Tau3Mu candidate selection.
-
-## ⚙️ Environment Setup
-
-Follow these instructions to recreate the workspace on a standard CMS environment (e.g., LXPLUS).
-
-```bash
-# Create the software area
-cmsrel CMSSW_15_1_X
-cd CMSSW_15_1_X/src
-cmsenv
-
-# Initialize the repository and download the code
-git clone https://github.com/fnenna/Tau3MuRun3_NANO .
-
-# Compile the code
-scram b -j 8
-```
----
+This workspace is dedicated to the production of **custom NanoAOD** for the $\tau \to 3\mu$ decay analysis for the HF channel.
 
 ## Testing Production
 
 If you want to test the config file and produce the NanoAOD output from a small sample:
 
-1.  Ensure you have a valid grid proxy (`voms-proxy-init`).
+1.  Ensure you have a valid grid proxy (`voms-proxy-init`):
+    ```bash
+    voms-proxy-init --voms cms
+    ```
 2.  Run the job:
     ```bash
     cmsRun PhysicsTools/Tau3muNANO/test/test_{analysis_type}_cfg.py isMC=True/False
@@ -52,5 +37,12 @@ source submit_AllJobs.sh [Year] [isMC]
 * `[year]` = `2022`,  `2023` or `2024`: `[MCflag]` = `true or false`
 
 Note that `submit_AllJobs.sh` needs to be updated with the list of the eras for the year under analysis, if it has not been added yet.
+To check the status of the jobs for the whole eras, you can use the `status.sh` contained in each era directory.
+If there are failed jobs you can run:
+```
+source resubmitAll.sh [Year]
+```
+NB: for the moment this is written only for data. TO-DO: add MC treatment.
 
+Let's move now to the analysis directory Tau3MuANA!
 <p>&nbsp;</p>
