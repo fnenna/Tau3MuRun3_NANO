@@ -274,7 +274,6 @@ def Analysis_DsPhiPi(tree, dataset_name, output_path, era, isMC):
             isMC=4
         else:
             isMC = 5  # Could be a flag used downstream in processing logic
-    isMC = 0
 
     # 1. Main logic execution
     arrays, selection_cutflow_dict = process_dsphipi_events(tree, isMC=isMC)
