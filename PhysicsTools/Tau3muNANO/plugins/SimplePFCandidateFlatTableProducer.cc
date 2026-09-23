@@ -2,7 +2,7 @@
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 
-typedef SimpleFlatTableProducer<pat::PackedCandidate> SimplePFCandidateFlatTableProducer;
+typedef SimpleFlatTableProducer<pat::PackedCandidate> MySimplePFCandidateFlatTableProducer;
 
 // Registriamo il modulo nel framework
-DEFINE_FWK_MODULE(SimplePFCandidateFlatTableProducer);
+DEFINE_FWK_MODULE(MySimplePFCandidateFlatTableProducer);

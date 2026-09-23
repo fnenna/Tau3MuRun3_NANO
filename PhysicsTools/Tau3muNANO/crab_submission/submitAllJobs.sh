@@ -2,10 +2,11 @@
 # Usage:
 #    submitAllJobs.sh
 
-helpstring="Usage: submitAllJobs.sh [Year] [isMC]"
+helpstring="Usage: submitAllJobs.sh [Year] [isMC] [channel]"
 
 year=$1
 MCflag=$2
+channel=$3
 
 if [ -z ${2+x} ]; then
     echo -e ${helpstring}
@@ -22,7 +23,8 @@ fi
 declare -a era2022preE=("C" "D-v1" "D-v2" "E")
 declare -a era2022postE=("F" "G")
 declare -a era2023=("B" "C-v1" "C-v2" "C-v3" "C-v4" "D-v1" "D-v2")
-declare -a era2024=("B" "C" "D" "E-v1" "E-v2" "F" "G" "H" "I-v1" "I-v2")
+declare -a era2024=("C" "D" "E" "F" "G" "H" "I" "I-v2" "I-v3")
+declare -a era2024=("I-v3")
 declare -a era2025=("B" "C-v1" "C-v2" "D" "E" "F-v1" "F-v2" "G")
 readarray -t MCeras22 < <(jq -r '.["2022"].MC_era[]' Runs.json)
 readarray -t MCeras23 < <(jq -r '.["2023"].MC_era[]' Runs.json)
@@ -37,6 +39,8 @@ if [ "$MCflag" == "false" ]; then
             era=("${era2025[@]}")
         elif [[ "$year" == "2024" ]]; then
             era=("${era2024[@]}")
+        elif [[ "$year" == "2023" ]]; then
+            era=("${era2023[@]}")
         else
             return
         fi
@@ -76,6 +80,6 @@ fi
 
 for i in "${era[@]}"; do
     echo -e "\nData $i"
-    python3 submit_CRAB.py --year ${year} --${type}era ${i} 
+    python3 submit_CRAB.py --year ${year} --${type}era ${i} --channel ${channel}
     sleep 1
 done

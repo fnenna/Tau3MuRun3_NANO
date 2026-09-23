@@ -17,7 +17,6 @@
 #include "TVector3.h"
 #include "TMath.h"
 
-// --- Supporto per Matching Muoni ---
 #include "DataFormats/MuonReco/interface/MuonChamberMatch.h"
 #include "DataFormats/MuonReco/interface/MuonSegmentMatch.h"
 
@@ -100,10 +99,7 @@ public:
                     KalmanVertexFitter svFitter(true);
                     TransientVertex sv = svFitter.vertex(muTTracks);
 
-                    // --- Logica Fallimento Fit (Uniformata al Tau3Mu) ---
                     if (!sv.isValid() || !sv.hasRefittedTracks()) {
-                        //fillDummyCandidate(cand, i, j, k, m1, m2, tr);
-                        //ret_val->push_back(cand);
                         continue;
                     }
 
@@ -173,7 +169,6 @@ public:
                         cosPointingAngle = flightDir.unit().dot(momentum.unit());
                     }
 
-                    // Clipping di sicurezza per std::acos
                     cosPointingAngle = std::max(-1.0, std::min(1.0, cosPointingAngle));
                     double pointingAngle = std::acos(cosPointingAngle);
                     // Isolation & DCA
@@ -195,7 +190,6 @@ public:
                     float dr_m1_tr = reco::deltaR(m1, tr);
                     float dr_m2_tr = reco::deltaR(m2, tr);
 
-                    // Funzione helper logica (o inline) per pulire l'ISO
                     auto get_cleaned_rel_iso = [&](const pat::Muon& mu, float dr_mu_tr, float R) {
                         auto iso = (R == 0.4) ? mu.pfIsolationR04() : mu.pfIsolationR03();
                         float sumCharged = iso.sumChargedHadronPt;
@@ -213,7 +207,6 @@ public:
                     float mu2_iso03_clean = get_cleaned_rel_iso(m2, dr_m2_tr, 0.3);
                     float mu2_iso04_clean = get_cleaned_rel_iso(m2, dr_m2_tr, 0.4);
 
-                    // Salva come userFloat
                     // --- Fill Candidate ---
                     cand.setP4(p4_ref);
                     cand.setCharge(m1.charge() + m2.charge() + tr.charge());
@@ -253,7 +246,6 @@ public:
                     cand.addUserFloat("pv_orig_x", bestPV.x()); 
                     cand.addUserFloat("pv_orig_y", bestPV.y()); 
                     cand.addUserFloat("pv_orig_z", bestPV.z());
-
                     // Displacement
                     cand.addUserFloat("flightDist", d3d.value());
                     cand.addUserFloat("flightDistErr", d3d.error());
@@ -264,12 +256,10 @@ public:
                     cand.addUserFloat("flightDistBS", dBS.value());
                     cand.addUserFloat("flightDistBSErr", dBS.error());
                     cand.addUserFloat("flightDistBSSig", dBS.value() / dBS.error());
-                    
                     // Impact Parameters
                     cand.addUserFloat("dxy_mu1", m1.innerTrack()->dxy(cleanPV.position()));
                     cand.addUserFloat("dxy_mu2", m2.innerTrack()->dxy(cleanPV.position()));
                     cand.addUserFloat("dxy_tr",  tr.pseudoTrack().dxy(cleanPV.position()));
-
                     // High Purity & Isolation
                     cand.addUserInt("mu1_innerTrk_hp", m1.innerTrack()->quality(reco::TrackBase::highPurity));
                     cand.addUserInt("mu2_innerTrk_hp", m2.innerTrack()->quality(reco::TrackBase::highPurity));
@@ -279,7 +269,6 @@ public:
                     cand.addUserFloat("cosPointingAngle", cosPointingAngle);
                     cand.addUserFloat("pointingAngle", pointingAngle);
 
-                    // Matching (Solo Muoni)
                     fillMatchInfo(m1, cand, "mu1");
                     fillMatchInfo(m2, cand, "mu2");
 
@@ -293,104 +282,6 @@ public:
             }
         }
         evt.put(std::move(ret_val));
-    }
-
-    // Funzione helper per uniformare i rami di fallimento fit
-    void fillDummyCandidate(pat::CompositeCandidate& cand, int i, int j, int k, const pat::Muon& m1, const pat::Muon& m2, const pat::PackedCandidate& tr) const {
-        cand.addUserInt("mu1_idx", i); cand.addUserInt("mu2_idx", j); cand.addUserInt("tr_idx", k);
-        cand.setP4(reco::Candidate::LorentzVector(-99., -99., -99., -99.)); 
-        cand.setCharge(m1.charge() + m2.charge() + tr.charge());
-        cand.setVertex(reco::Candidate::Point(-99., -99., -99.));
-
-        
-        cand.addUserFloat("mu1_pt",  m1.pt());
-        cand.addUserFloat("mu1_eta", m1.eta());
-        cand.addUserFloat("mu1_phi", m1.phi());
-        cand.addUserFloat("mu1_charge", m1.charge());
-
-        cand.addUserFloat("mu2_pt",  m2.pt());
-        cand.addUserFloat("mu2_eta", m2.eta());
-        cand.addUserFloat("mu2_phi", m2.phi());
-        cand.addUserFloat("mu2_charge", m2.charge());
-
-        cand.addUserFloat("tr_pt",  tr.pt());
-        cand.addUserFloat("tr_eta", tr.eta());
-        cand.addUserFloat("tr_phi", tr.phi());
-        cand.addUserFloat("tr_charge", tr.charge());
-
-        // SV Quality & Mass
-        cand.addUserFloat("sv_mass", -99.);
-        cand.addUserFloat("sv_prob", -99.);
-        cand.addUserFloat("sv_chi2", -99.);
-        cand.addUserFloat("sv_ndof", -99.);
-
-
-        // Positions
-        cand.addUserFloat("sv_x", -99.);
-        cand.addUserFloat("sv_y", -99.);
-        cand.addUserFloat("sv_z", -99.);
-        cand.addUserFloat("pv_x", -99.);
-        cand.addUserFloat("pv_y", -99.);
-        cand.addUserFloat("pv_z", -99.);
-        cand.addUserFloat("pv_orig_x", -99.); 
-        cand.addUserFloat("pv_orig_y", -99.); 
-        cand.addUserFloat("pv_orig_z", -99.);
-
-        // SV Refitted Kinematics (Matching twomu1trk names)
-        cand.addUserFloat("refit_mu1_pt", -99.);
-        cand.addUserFloat("refit_mu2_pt", -99.);
-        cand.addUserFloat("refit_tr_pt",  -99.); // Name kept for consistency
-
-
-        // Displacement & Significance
-        cand.addUserFloat("flightDist", -99.);
-        cand.addUserFloat("flightDistErr", -99.);
-        cand.addUserFloat("flightDistSig", -99.);
-        cand.addUserFloat("lxy_pv", -99.); cand.addUserFloat("lxy_pv_err", -99.);
-        cand.addUserFloat("distXY", -99.);
-        cand.addUserFloat("distXYSig", -99.);
-        cand.addUserFloat("l3d_pv", -99.); cand.addUserFloat("l3d_pv_err", -99.);
-        cand.addUserFloat("flightDistBS", -99.);
-        cand.addUserFloat("lxy_bs", -99.); cand.addUserFloat("lxy_bs_err", -99.);
-        
-        // Impact Parameters
-        cand.addUserFloat("dxy_mu1", -99.);
-        cand.addUserFloat("dxy_mu2", -99.);
-        cand.addUserFloat("dxy_tr", -99.); // tr treated as 'track'
-        
-        cand.addUserFloat("cos_3d", -99.);
-        cand.addUserFloat("dr12", -99.); cand.addUserFloat("dr23", -99.); cand.addUserFloat("dr13", -99.);
-        cand.addUserFloat("dr_max", -99.);
-        cand.addUserFloat("dz12", -99.); cand.addUserFloat("dz23", -99.); cand.addUserFloat("dz13", -99.);
-        cand.addUserFloat("dz_max", -99.);
-        cand.addUserFloat("d0", -99.);
-        cand.addUserFloat("d0_sig", -99.);
-        cand.addUserFloat("d0max_sig", -99.);
-        cand.addUserFloat("relative_iso", -99.);
-        cand.addUserFloat("mindca_iso", -99.);
-
-        cand.addUserInt("mu1_innerTrk_hp", -99);
-        cand.addUserInt("mu2_innerTrk_hp", -99);
-        cand.addUserInt("tr_innerTrk_hp", -99);
-
-
-        for (int m = 1; m <= 2; ++m) {
-            for (int s = 1; s <= 2; ++s) {
-                std::string prefix = "mu" + std::to_string(m) + "_match" + std::to_string(s);
-                cand.addUserFloat(prefix + "_dX", -999.f);
-                cand.addUserFloat(prefix + "_pullX", -999.f);
-                cand.addUserFloat(prefix + "_dY", -999.f);
-                cand.addUserFloat(prefix + "_pullY", -999.f);
-                cand.addUserFloat(prefix + "_pullDxDz", -999.f);
-                cand.addUserFloat(prefix + "_pullDyDz", -999.f);
-            }
-        }
-
-        cand.addUserFloat("mu1_iso03_clean", -99.);
-        cand.addUserFloat("mu1_iso04_clean", -99.);
-        cand.addUserFloat("mu2_iso03_clean", -99.);
-        cand.addUserFloat("mu2_iso04_clean", -99.);
-        cand.addUserFloat("pointingAngle", -99);
     }
 
     void fillMatchInfo(const pat::Muon& muon, pat::CompositeCandidate& cand, std::string prefix) const {

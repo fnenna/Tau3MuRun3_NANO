@@ -36,33 +36,28 @@
         "database": "ParkingDoubleMuonLowMass*",
         "Campaign": ["Run2023B-22Sep2023-v*", "Run2023C-22Sep2023_v1-v*", "Run2023C-22Sep2023_v2-v1", "Run2023C-22Sep2023_v3-v1", "Run2023C-22Sep2023_v4-v*", "Run2023D-22Sep2023_v1-v1", "Run2023D-22Sep2023_v2-v*"],
         
-        "MC_era": ["MC_Bd_pre", "MC_Bu_pre", "MC_Ds_pre", "MC_Bd_post", "MC_Bu_post", "MC_Ds_post"],
-        "MC_input_type": ["global", "global", "global", "global", "global", "global"],
-        "MC_GTs": ["130X_mcRun3_2023_realistic_v14", "130X_mcRun3_2023_realistic_v14", "130X_mcRun3_2023_realistic_v14", 
-                    "130X_mcRun3_2023_realistic_postBPix_v2", "130X_mcRun3_2023_realistic_postBPix_v2", "130X_mcRun3_2023_realistic_postBPix_v2"],
+        "MC_era": ["MC_DsPhiPi_pre", "MC_DsPhiPi_post"],
+        "MC_input_type": ["global", "global"],
+        "MC_GTs": ["130X_mcRun3_2023_realistic_v14", "130X_mcRun3_2023_realistic_postBPix_v2"],
         "MC_datasets": [
-            "/BdtoTau_Tauto3Mu_3MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer23MiniAODv4-130X_mcRun3_2023_realistic_v14-v2/MINIAODSIM", 
-            "/ButoTau_Tauto3Mu_3MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer23MiniAODv4-130X_mcRun3_2023_realistic_v14-v2/MINIAODSIM", 
-            "/DstoTau_Tauto3Mu_3MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer23MiniAODv4-130X_mcRun3_2023_realistic_v14-v1/MINIAODSIM", 
-            "/BdtoTau_Tauto3Mu_3MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer23BPixMiniAODv4-130X_mcRun3_2023_realistic_postBPix_v2-v2/MINIAODSIM", 
-            "/ButoTau_Tauto3Mu_3MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer23BPixMiniAODv4-130X_mcRun3_2023_realistic_postBPix_v2-v3/MINIAODSIM", 
-            "/DstoTau_Tauto3Mu_3MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer23BPixMiniAODv4-130X_mcRun3_2023_realistic_postBPix_v2-v1/MINIAODSIM"
+            "/DstoPhiPi_Phito2Mu_MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer23MiniAODv4-130X_mcRun3_2023_realistic_v14-v2/MINIAODSIM",
+            "/DstoPhiPi_Phito2Mu_MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer23BPixMiniAODv4-130X_mcRun3_2023_realistic_postBPix_v2-v2/MINIAODSIM"
         ]
     },
 
     "2024": {
-        "Eras": ["B", "C", "D", "E-v1", "E-v2", "F", "G", "H", "I-v1", "I-v2"],
-        "GTs": ["140X_dataRun3_v20","140X_dataRun3_v20","140X_dataRun3_v20","140X_dataRun3_v20","140X_dataRun3_v20","140X_dataRun3_v20", "140X_dataRun3_v20","140X_dataRun3_v20","140X_dataRun3_v20","140X_dataRun3_v20"],
-        "golden_json": ["Collisions24/2024B_Golden.json", "Collisions24/2024C_Golden.json", "Collisions24/2024D_Golden.json","Collisions24/2024E_Golden.json", "Collisions24/2024E_Golden.json", "Collisions24/2024F_Golden.json", "Collisions24/2024G_Golden.json",
-                        "Collisions24/2024H_Golden.json", "Collisions24/2024I_Golden.json", "Collisions24/2024I_Golden.json"
+        "Eras": ["C", "D", "E", "F", "G", "H", "I", "I-v2","I-v3"],
+        "GTs": ["150X_dataRun3_v2","150X_dataRun3_v2","150X_dataRun3_v2", "150X_dataRun3_v2", "150X_dataRun3_v2", "150X_dataRun3_v2","150X_dataRun3_v2", "150X_dataRun3_v2", "150X_dataRun3_v2"],
+        "golden_json": ["Collisions24/2024C_Golden.json", "Collisions24/2024D_Golden.json","Collisions24/2024E_Golden.json","Collisions24/2024F_Golden.json", "Collisions24/2024G_Golden.json",
+                        "Collisions24/2024H_Golden.json", "Collisions24/2024I_Golden.json", "Collisions24/2024I_Golden.json","Collisions24/2024I_Golden.json"
                     ],
         "database": "ParkingDoubleMuonLowMass*",
-        "Campaign": ["Run2024B-PromptReco-v1", "Run2024C-PromptReco-v1", "Run2024D-PromptReco-v1", "Run2024E-PromptReco-v1", "Run2024E-PromptReco-v2", "Run2024F-PromptReco-v1", "Run2024G-PromptReco-v1", "Run2024H-PromptReco-v1", "Run2024I-PromptReco-v1", "Run2024I-PromptReco-v2"],
+        "Campaign": ["Run2024C-MINIv6NANOv15-v*", "Run2024D-MINIv6NANOv15-v*", "Run2024E-MINIv6NANOv15-v*", "Run2024F-MINIv6NANOv15-v*", "Run2024G-MINIv6NANOv15-v*", "Run2024H-MINIv6NANOv15-v*", "Run2024I-MINIv6NANOv15_v2-v2", "Run2024I-MINIv6NANOv15_v2", "Run2024I-MINIv6NANOv15_v3"],
         
         "MC_era": ["MC_DsPhiPi"],
         "MC_input_type": ["global"],
-        "MC_GTs": ["140X_mcRun3_2024_realistic_v26"],
-        "MC_datasets": ["/DstoPhiPi-Phito2Mu_Fil-Mu_TuneCP5_13p6TeV_pythia8-evtgen/RunIII2024Summer24MiniAOD-140X_mcRun3_2024_realistic_v26-v2/MINIAODSIM"
+        "MC_GTs": ["150X_mcRun3_2024_realistic_v4"],
+        "MC_datasets": ["/DstoPhiPi-Phito2Mu_Fil-Mu_TuneCP5_13p6TeV_pythia8-evtgen/RunIII2024Summer24MiniAODv6-150X_mcRun3_2024_realistic_v2-v3/MINIAODSIM"
         ]
     },
 
@@ -77,8 +72,8 @@
         
         "MC_era": ["MC_DsPhiPi"],
         "MC_input_type": ["global"],
-        "MC_GTs": [],
-        "MC_datasets": [
+        "MC_GTs": ["150X_mcRun3_2024_realistic_v2"],
+        "MC_datasets": ["/DstoPhiPi-Phito2Mu_Fil-Mu_TuneCP5_13p6TeV_pythia8-evtgen/RunIII2024Summer24MiniAODv6-150X_mcRun3_2024_realistic_v2-v3/MINIAODSIM"
         ]
     }
 
