@@ -52,6 +52,7 @@ def process_dsphipi_events(sub_df, isMC):
     
     # CUT 1 : Check L1 and HLT decision
     # Check L1trigger
+    '''
     L1_triggers = ["Trigger_L1_DoubleMu0er1p5_SQ_OS_dR_Max1p4",
                    "Trigger_L1_DoubleMu0er1p4_SQ_OS_dR_Max1p4",
                    "Trigger_L1_DoubleMu4_SQ_OS_dR_Max1p2",
@@ -65,7 +66,7 @@ def process_dsphipi_events(sub_df, isMC):
     dak_L1mask = L1_passed
     dak_L1Tpassed = dak.sum(dak_L1mask) 
     cutflow_lazy["L1Tpassed"] = dak_L1Tpassed # Count the survivors
-    
+    '''
     # From now on I only take into account the events that have at least one of the required L1 passed.
     L1seed = (1*sub_df["Trigger_L1_DoubleMu0er1p5_SQ_OS_dR_Max1p4"]
             + 10*sub_df["Trigger_L1_DoubleMu4_SQ_OS_dR_Max1p2"]
@@ -76,12 +77,14 @@ def process_dsphipi_events(sub_df, isMC):
     # Check HLT
     HLT_passed = (sub_df["Trigger_HLT_DoubleMu4_3_LowMass_v"]==1)
     dak_HLTmask = HLT_passed
-    dak_HLTpassed = dak.sum(dak_HLTmask&dak_L1mask)  
+    #dak_HLTpassed = dak.sum(dak_HLTmask&dak_L1mask) 
+    dak_HLTpassed = dak.sum(dak_HLTmask)  
     cutflow_lazy["HLTpassed"] = dak_HLTpassed
     HLTpath = dak.values_astype(1*sub_df["Trigger_HLT_DoubleMu3_Trk_Tau3mu"], "int64")
     sub_df["HLTpath"] = HLTpath
-    sub_df = sub_df[dak_L1mask&dak_HLTmask]
-    
+    #sub_df = sub_df[dak_L1mask&dak_HLTmask]
+    sub_df = sub_df[dak_HLTmask]
+
     # --------------------------------------------------------------------------------
     # STEP 1: Associate each muon and track in the triplets with their corresponding objects in the Muon/Track branches
     # --------------------------------------------------------------------------------
@@ -173,14 +176,15 @@ def process_dsphipi_events(sub_df, isMC):
     muon2_acceptance_barrel = ((abs(sub_df.Muon_eta_2) <= 1.2) & (sub_df.Muon_pt_2 > 3.5))
     muon1_acceptance_endcap = (((abs(sub_df.Muon_eta_1) > 1.2) & (abs(sub_df.Muon_eta_1) < 2.4)) & (sub_df.Muon_pt_1 > 2.0))
     muon2_acceptance_endcap = (((abs(sub_df.Muon_eta_2) > 1.2) & (abs(sub_df.Muon_eta_2) < 2.4)) & (sub_df.Muon_pt_2 > 2.0))
-    track_acceptance_barrel = ((abs(sub_df.Track_eta_tr) <= 1.2) & (sub_df.Track_pt_tr > 3.5))
-    track_acceptance_endcap = (((abs(sub_df.Track_eta_tr) > 1.2) & (abs(sub_df.Track_eta_tr) < 2.4)) & (sub_df.Track_pt_tr > 2.0))
+    #track_acceptance_barrel = ((abs(sub_df.Track_eta_tr) <= 1.2) & (sub_df.Track_pt_tr > 3.5))
+    #track_acceptance_endcap = (((abs(sub_df.Track_eta_tr) > 1.2) & (abs(sub_df.Track_eta_tr) < 2.4)) & (sub_df.Track_pt_tr > 2.0))
+    track_acceptance = sub_df.Track_pt_tr > 2.0
     muon_acceptance = (
         (muon1_acceptance_barrel | muon1_acceptance_endcap) &
         (muon2_acceptance_barrel | muon2_acceptance_endcap)
     )
 
-    track_acceptance = (track_acceptance_barrel | track_acceptance_endcap)
+    #track_acceptance = (track_acceptance_barrel | track_acceptance_endcap)
     acceptance = muon_acceptance & track_acceptance
 
     # Vertex significance cut
@@ -210,9 +214,14 @@ def process_dsphipi_events(sub_df, isMC):
     tri_muon_mass_cut = ((sub_df.Cand2MuTrk_mass >= 1.62) & (sub_df.Cand2MuTrk_mass <= 2.1))
     phi_mass_window = ((sub_df.DiMu12_Mass >= 0.98) & (sub_df.DiMu12_Mass <= 1.06))
 
-    triggerMatch_1 = ((sub_df.Muon_HLT_DoubleMu3_TkMu_DsTau3Mu_v_1 + sub_df.Muon_HLT_DoubleMu3_Trk_Tau3mu_1 + sub_df.Muon_HLT_DoubleMu3_Trk_Tau3mu_NoL1Mass_v_1 + sub_df.Muon_HLT_DoubleMu4_3_LowMass_v_1 + sub_df.Muon_HLT_DoubleMu4_LowMass_Displaced_v_1 > 0)
+    #triggerMatch_1 = ((sub_df.Muon_HLT_DoubleMu3_TkMu_DsTau3Mu_v_1 + sub_df.Muon_HLT_DoubleMu3_Trk_Tau3mu_1 + sub_df.Muon_HLT_DoubleMu3_Trk_Tau3mu_NoL1Mass_v_1 + sub_df.Muon_HLT_DoubleMu4_3_LowMass_v_1 + sub_df.Muon_HLT_DoubleMu4_LowMass_Displaced_v_1 > 0)
+    #                & (abs(sub_df.Muon_trgDR_1) < 0.03) & (abs(sub_df.Muon_trgDPT_1) < 0.1))
+    #triggerMatch_2 = ((sub_df.Muon_HLT_DoubleMu3_TkMu_DsTau3Mu_v_2 + sub_df.Muon_HLT_DoubleMu3_Trk_Tau3mu_2 + sub_df.Muon_HLT_DoubleMu3_Trk_Tau3mu_NoL1Mass_v_2 + sub_df.Muon_HLT_DoubleMu4_3_LowMass_v_2 + sub_df.Muon_HLT_DoubleMu4_LowMass_Displaced_v_2 > 0)
+    #                & (abs(sub_df.Muon_trgDR_2) < 0.03) & (abs(sub_df.Muon_trgDPT_2) < 0.1))
+
+    triggerMatch_1 = ((sub_df.Muon_HLT_DoubleMu4_3_LowMass_v_1 > 0) 
                     & (abs(sub_df.Muon_trgDR_1) < 0.03) & (abs(sub_df.Muon_trgDPT_1) < 0.1))
-    triggerMatch_2 = ((sub_df.Muon_HLT_DoubleMu3_TkMu_DsTau3Mu_v_2 + sub_df.Muon_HLT_DoubleMu3_Trk_Tau3mu_2 + sub_df.Muon_HLT_DoubleMu3_Trk_Tau3mu_NoL1Mass_v_2 + sub_df.Muon_HLT_DoubleMu4_3_LowMass_v_2 + sub_df.Muon_HLT_DoubleMu4_LowMass_Displaced_v_2 > 0)
+    triggerMatch_2 = ((sub_df.Muon_HLT_DoubleMu4_3_LowMass_v_2 > 0)
                     & (abs(sub_df.Muon_trgDR_2) < 0.03) & (abs(sub_df.Muon_trgDPT_2) < 0.1))
 
     cutflow_lazy["BaseCut"] = dak_base_cuts
