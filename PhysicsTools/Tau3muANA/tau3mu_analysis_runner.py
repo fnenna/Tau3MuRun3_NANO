@@ -8,6 +8,7 @@ import dsPhiPi_analyser as analysis_control
 import tau3mu_analyser as analysis_signal
 import pandas as pd
 import numpy as np
+import sys
 
 import os
 import logging
@@ -51,7 +52,15 @@ def run_analysis(year: str, era: str, analysis_type: str, output_dir: str, n_wor
 
         # 4. Filter data for the specific stream
         if isMC:
-            base_fileout = f"{analysis_type}_{output_dir}_isMC"
+            mask = (
+                (df_all['year'].astype(str) == str(year)) & 
+                (df_all['era'] == era) & 
+                (df_all['stream'] == int(stream))
+            )
+            if era != "X":
+                base_fileout = f"{analysis_type}_{output_dir}_{year}_{era}_isMC"
+            else:
+                base_fileout = f"{analysis_type}_{output_dir}_{year}_isMC"
         else:
             mask = (
                 (df_all['year'].astype(str) == str(year)) & 
@@ -114,8 +123,22 @@ def main():
     parser.add_argument('-o', '--output', required=True, help='Prefix for the output directory or file')
     parser.add_argument('-w', '--n_workers', required=True, type=int, help='Number of Dask workers to use, e.g. 100')
 
-    args = parser.parse_args()
-    
+    try:
+        args = parser.parse_args()
+    except SystemExit as e:
+        print(f"\n[ERROR] Invalid command-line arguments (exit code {e.code})")
+
+        print("\nArguments received:")
+        print(" ".join(sys.argv))
+
+        print("\nRequired arguments:")
+        print("  -y / --year")
+        print("  -e / --era")
+        print("  -t / --type  (control | signal)")
+        print("  -o / --output")
+        print("  -w / --n_workers")
+
+        raise    
     print("Setting up HTCondor Dask cluster...")
 
     cluster = LocalCluster(
