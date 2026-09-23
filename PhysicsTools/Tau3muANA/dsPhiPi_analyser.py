@@ -93,16 +93,8 @@ def process_dsphipi_events(sub_df, isMC):
         for i in range(len(columns_old)):
             if "Muon" in columns_old[i] and columns_old[i]!="nMuon":
                 sub_df[f"{columns_old[i]}_{mu_idx+1}"] = sub_df[f"{columns_old[i]}"][sub_df[f"Cand2MuTrk_mu{mu_idx+1}_idx"]]
-            elif "mcMatch" in columns_old[i]:
-                sub_df[f"{columns_old[i]}_{mu_idx+1}"] = sub_df[f"{columns_old[i]}"][sub_df[f"Cand2MuTrk_mu{mu_idx+1}_idx"]]
-            elif "genOrigin" in columns_old[i]:
-                sub_df[f"{columns_old[i]}_{mu_idx+1}"] = sub_df[f"{columns_old[i]}"][sub_df[f"Cand2MuTrk_mu{mu_idx+1}_idx"]]
     for i in range(len(columns_old)):
         if "Track_" in columns_old[i] and columns_old[i]!="nTrack":
-            sub_df[f"{columns_old[i]}_tr"] = sub_df[f"{columns_old[i]}"][sub_df[f"Cand2MuTrk_tr_idx"]]
-        elif "mcMatch" in columns_old[i]:
-            sub_df[f"{columns_old[i]}_tr"] = sub_df[f"{columns_old[i]}"][sub_df[f"Cand2MuTrk_tr_idx"]]
-        elif "genOrigin" in columns_old[i]:
             sub_df[f"{columns_old[i]}_tr"] = sub_df[f"{columns_old[i]}"][sub_df[f"Cand2MuTrk_tr_idx"]]
             
     # --- Combined Quality Variables (CombinedQuality) ---
