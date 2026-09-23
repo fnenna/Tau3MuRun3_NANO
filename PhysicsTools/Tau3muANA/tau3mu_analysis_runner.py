@@ -8,6 +8,7 @@ import dsPhiPi_analyser as analysis_control
 import tau3mu_analyser as analysis_signal
 import pandas as pd
 import numpy as np
+import sys
 
 import os
 import logging
@@ -51,7 +52,15 @@ def run_analysis(year: str, era: str, analysis_type: str, output_dir: str, n_wor
 
         # 4. Filter data for the specific stream
         if isMC:
-            base_fileout = f"{analysis_type}_{output_dir}_isMC"
+            mask = (
+                (df_all['year'].astype(str) == str(year)) & 
+                (df_all['era'] == era) & 
+                (df_all['stream'] == int(stream))
+            )
+            if era != "X":
+                base_fileout = f"{analysis_type}_{output_dir}_{year}_{era}_isMC"
+            else:
+                base_fileout = f"{analysis_type}_{output_dir}_{year}_isMC"
         else:
             mask = (
                 (df_all['year'].astype(str) == str(year)) & 
@@ -82,11 +91,10 @@ def run_analysis(year: str, era: str, analysis_type: str, output_dir: str, n_wor
                 # 7. Execute specific Analysis modules
                 if analysis_type == "control":
                     print(f"Running DsPhiPi analysis -> {current_fileout}")
-                    analysis_control.Analysis_DsPhiPi(events, output_dir, current_fileout, year, era, stream, isMC)
-                    
+                    analysis_control.Analysis_DsPhiPi(events, output_dir, current_fileout, era, isMC)
                 elif analysis_type == "signal":
                     print(f"Running Tau3Mu analysis -> {current_fileout}")
-                    analysis_signal.Analysis_Tau3Mu(events, output_dir, current_fileout, era, stream, isMC)
+                    analysis_signal.Analysis_Tau3Mu(events, output_dir, current_fileout, era, isMC)
                     
                 else:
                     print(f"Error: Unsupported analysis type '{analysis_type}'.")
@@ -110,14 +118,27 @@ def main():
     )
     parser.add_argument('-y', '--year', required=True, help='Data-taking year (e.g., 2024, 2025, etc.)')
     parser.add_argument('-e', '--era', required=True, help='Data-taking era (e.g., B, C, D, E-v1, etc.)')
-    parser.add_argument('-s', '--stream', required=True, help='Data-taking stream (e.g., 0-7)')
     parser.add_argument('-t', '--type', required=True, choices=['control', 'signal'], help='Type of analysis')
     parser.add_argument('--isMC', action='store_true', help='Analyze Monte Carlo if present, otherwise analyze data')
     parser.add_argument('-o', '--output', required=True, help='Prefix for the output directory or file')
     parser.add_argument('-w', '--n_workers', required=True, type=int, help='Number of Dask workers to use, e.g. 100')
 
-    args = parser.parse_args()
-    
+    try:
+        args = parser.parse_args()
+    except SystemExit as e:
+        print(f"\n[ERROR] Invalid command-line arguments (exit code {e.code})")
+
+        print("\nArguments received:")
+        print(" ".join(sys.argv))
+
+        print("\nRequired arguments:")
+        print("  -y / --year")
+        print("  -e / --era")
+        print("  -t / --type  (control | signal)")
+        print("  -o / --output")
+        print("  -w / --n_workers")
+
+        raise    
     print("Setting up HTCondor Dask cluster...")
 
     cluster = LocalCluster(
@@ -128,8 +149,8 @@ def main():
     client.get_versions(check=True)
     
     print(f"Dashboard disponibile al link: {cluster.dashboard_link}")
-
     file_summary = f"filePaths_{args.type}_{'MC' if args.isMC else 'Data'}_{args.year}.csv"
+    print(file_summary)
 
     run_analysis(args.year,args.era, args.type, args.output, args.n_workers, isMC = args.isMC, csv_path=file_summary)
 
