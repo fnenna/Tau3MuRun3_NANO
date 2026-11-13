@@ -149,7 +149,7 @@ def main():
     client.get_versions(check=True)
     
     print(f"Dashboard disponibile al link: {cluster.dashboard_link}")
-    file_summary = f"filePaths_{args.type}_{'MC' if args.isMC else 'Data'}_{args.year}.csv"
+    file_summary = f"filePaths_{args.type}_{'MC' if args.isMC else 'Data'}_{args.year}_None_newWFixes.csv"
     print(file_summary)
 
     run_analysis(args.year,args.era, args.type, args.output, args.n_workers, isMC = args.isMC, csv_path=file_summary)

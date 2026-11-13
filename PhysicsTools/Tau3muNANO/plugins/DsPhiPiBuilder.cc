@@ -277,6 +277,14 @@ public:
                     cand.addUserFloat("mu2_iso03_clean", mu2_iso03_clean);
                     cand.addUserFloat("mu2_iso04_clean", mu2_iso04_clean);
 
+                    cand.addUserFloat("sigma_m", resoTriplMass(
+                        m1.pt(), m1.eta(), m1.phi(),
+                        m2.pt(), m2.eta(), m2.phi(),
+                        tr.pt(), tr.eta(), tr.phi(),
+                        m1.bestTrack()->ptError(),
+                        m2.bestTrack()->ptError(),
+                        tr.pseudoTrack().ptError()
+                    ));
                     ret_val->push_back(cand);
                 }
             }
@@ -307,6 +315,34 @@ public:
                 cand.addUserFloat(lbl + "_dX", -999.f); cand.addUserFloat(lbl + "_pullX", -999.f);
             }
         }
+    }
+    static float resoTriplMass(double pt1, double eta1, double phi1,
+                            double pt2, double eta2, double phi2,
+                            double pt3, double eta3, double phi3,
+                            double dpt1, double dpt2, double dpt3,
+                            double m1 = 0.10566,
+                            double m2 = 0.10566,
+                            double m3 = 0.13957)
+    {
+        auto Efun = [](double pt, double eta, double m) {
+            return std::sqrt(pt*pt * std::cosh(eta)*std::cosh(eta) + m*m);
+        };
+        double E1 = Efun(pt1,eta1,m1), E2 = Efun(pt2,eta2,m2), E3 = Efun(pt3,eta3,m3);
+        double Et  = E1 + E2 + E3;
+        double Pxt = pt1*std::cos(phi1) + pt2*std::cos(phi2) + pt3*std::cos(phi3);
+        double Pyt = pt1*std::sin(phi1) + pt2*std::sin(phi2) + pt3*std::sin(phi3);
+        double Pzt = pt1*std::sinh(eta1) + pt2*std::sinh(eta2) + pt3*std::sinh(eta3);
+        double M   = std::sqrt(std::max(0., Et*Et - Pxt*Pxt - Pyt*Pyt - Pzt*Pzt));
+        if (M <= 0.) return 0.f;
+
+        auto dMdpT = [&](double pt, double eta, double phi, double Ei) {
+            return (Et*(pt*std::cosh(eta)*std::cosh(eta)/Ei)
+                    - Pxt*std::cos(phi) - Pyt*std::sin(phi) - Pzt*std::sinh(eta)) / M;
+        };
+        double d1 = dMdpT(pt1,eta1,phi1,E1);
+        double d2 = dMdpT(pt2,eta2,phi2,E2);
+        double d3 = dMdpT(pt3,eta3,phi3,E3);
+        return static_cast<float>(std::sqrt(d1*d1*dpt1*dpt1 + d2*d2*dpt2*dpt2 + d3*d3*dpt3*dpt3));
     }
 
 private:

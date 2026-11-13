@@ -12,6 +12,40 @@ vector.register_awkward()
 # Redirect standard error (stderr) to a file
 sys.stderr = open('errors.txt', 'w')
 
+# Seed L1 di HLT_DoubleMu3_TkMu_DsTau3Mu_v, HLT_DoubleMu3_Trk_Tau3mu_v e HLT_DoubleMu4_3_LowMass_v
+# (menu 2024), devono coincidere con L1_path_list in Tau3muNANO/python/Tau3mu_builder_cff.py
+L1_SEEDS = [
+    "L1_DoubleMu0er1p4_SQ_OS_dR_Max1p4",
+    "L1_DoubleMu4er2p0_SQ_OS_dR_Max1p6",
+    "L1_DoubleMu4p5_SQ_OS_dR_Max1p2",
+    "L1_DoubleMu0er1p5_SQ_OS_dR_Max1p4",
+    "L1_DoubleMu4_SQ_OS_dR_Max1p2",
+    "L1_DoubleMu3er2p0_SQ_OS_dR_Max1p6",
+    "L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p5",
+    "L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p6",
+    "L1_DoubleMu0er1p4_SQ_OS_dEta_Max1p2",
+    "L1_DoubleMu0er1p5_SQ_OS_dEta_Max1p2",
+    "L1_DoubleMu0er1p4_OQ_OS_dEta_Max1p6",
+    "L1_DoubleMu5_SQ_OS_dR_Max1p6",
+    "L1_TripleMu_3SQ_2p5SQ_0_OS_Mass_Max12",
+    "L1_TripleMu_4SQ_2p5SQ_0_OS_Mass_Max12",
+    "L1_TripleMu_5SQ_3SQ_0_DoubleMu_5_3_SQ_OS_Mass_Max9",
+    "L1_TripleMu_5SQ_3SQ_0OQ_DoubleMu_5_3_SQ_OS_Mass_Max9",
+    "L1_TripleMu_2SQ_1p5SQ_0OQ_Mass_Max12",
+    "L1_TripleMu_3SQ_2p5SQ_0OQ_Mass_Max12",
+]
+# Seed con prescale 1 in tutte le colonne 2024 (brilcalc, run 380115-386924)
+L1_UNPRESCALED_LOWMASS = [
+    "L1_DoubleMu0er1p4_SQ_OS_dR_Max1p4",
+    "L1_DoubleMu4er2p0_SQ_OS_dR_Max1p6",
+    "L1_DoubleMu4p5_SQ_OS_dR_Max1p2",
+]
+# path tau3mu (TkMu / Trk): in piu' i due TripleMu sempre a PS 1
+L1_UNPRESCALED_TAU3MU = L1_UNPRESCALED_LOWMASS + [
+    "L1_TripleMu_4SQ_2p5SQ_0_OS_Mass_Max12",
+    "L1_TripleMu_5SQ_3SQ_0_DoubleMu_5_3_SQ_OS_Mass_Max9",
+]
+
 # Funzione helper interna per rendere il codice leggibile
 def dak_max3(a, b, c):
     return dak.where(a > b, 
@@ -43,8 +77,8 @@ def DimuonMass(sub_df, first=1, second=2):
 
 
 def process_tau3mu_events(sub_df, isMC):
-    HLT_adaptation = (sub_df.Trigger_HLT_DoubleMu3_Trk_Tau3mu==1)|(sub_df.Trigger_HLT_DoubleMu3_TkMu_DsTau3Mu_v==1)|(sub_df.Trigger_HLT_DoubleMu3_Trk_Tau3mu_NoL1Mass_v==1|(sub_df.Trigger_HLT_DoubleMu4_3_LowMass_v==1)|(sub_df.Trigger_HLT_DoubleMu4_LowMass_Displaced_v==1))
-    sub_df = sub_df[HLT_adaptation]
+    # (rimossa la preselezione HLT_adaptation: aveva un bug di precedenza == / | ed era
+    #  ridondante con il taglio HLT qui sotto, come in dsPhiPi_analyser.py)
     sub_df["isMC"] = isMC
     cutflow_lazy = {}
     # CUT 0 : Before cuts - skip event if no good triplets
@@ -54,7 +88,8 @@ def process_tau3mu_events(sub_df, isMC):
     GoodTriplets = (sub_df.nTau3Mu >= 1)
     sub_df = sub_df[GoodTriplets]
     # CUT 1 : Check L1 and HLT decision
-    # Check L1trigger
+    # Check L1trigger: nessun taglio L1 (come in dsPhiPi_analyser.py), si salvano i singoli bit
+    '''
     L1_triggers = ["Trigger_L1_DoubleMu0er1p5_SQ_OS_dR_Max1p4",
                    "Trigger_L1_DoubleMu0er1p4_SQ_OS_dR_Max1p4",
                    "Trigger_L1_DoubleMu4_SQ_OS_dR_Max1p2",
@@ -72,6 +107,7 @@ def process_tau3mu_events(sub_df, isMC):
     dak_L1mask = L1_passed
     dak_L1Tpassed = dak.sum(dak_L1mask) 
     cutflow_lazy["L1Tpassed"] = dak_L1Tpassed # Count the survivors
+    '''
     # From now on I only take into account the events that have at least one of the required L1 passed.
     L1seed = (1*sub_df["Trigger_L1_DoubleMu0er1p5_SQ_OS_dR_Max1p4"]
             + 10*sub_df["Trigger_L1_DoubleMu4_SQ_OS_dR_Max1p2"]
@@ -79,16 +115,34 @@ def process_tau3mu_events(sub_df, isMC):
             + 1000*ak.values_astype(sub_df["Trigger_L1_TripleMu_2SQ_1p5SQ_0OQ_Mass_Max12"], "int64"))
     sub_df["L1seed"] = L1seed
 
+    # Singoli bit L1 (dopo prescale) e, se presenti, *_initial (prima dei prescale).
+    # I seed assenti nel ntuple di input (produzioni vecchie) vengono saltati.
+    input_fields = set(dak.fields(sub_df))
+    L1_bits_saved = [f"Trigger_{s}{suf}" for s in L1_SEEDS for suf in ("", "_initial")
+                     if f"Trigger_{s}{suf}" in input_fields]
+    # OR dei seed mai prescalati nel 2024: L1_unprescaled (LowMass) e L1_unprescaled_tau3mu (path tau3mu)
+    for label, seeds in (("L1_unprescaled", L1_UNPRESCALED_LOWMASS), ("L1_unprescaled_tau3mu", L1_UNPRESCALED_TAU3MU)):
+        for suf in ("", "_initial"):
+            names = [f"Trigger_{s}{suf}" for s in seeds]
+            if all(n in input_fields for n in names):
+                unpresc = sub_df[names[0]] == 1
+                for n in names[1:]:
+                    unpresc = unpresc | (sub_df[n] == 1)
+                sub_df[f"{label}{suf}"] = dak.values_astype(unpresc, "int64")
+                L1_bits_saved.append(f"{label}{suf}")
+
     # Check HLT
-    HLT_passed = (sub_df["Trigger_HLT_DoubleMu3_TkMu_DsTau3Mu_v"]==1)
+    # Path comune a segnale e controllo (Ds->phi pi): HLT_DoubleMu4_3_LowMass
+    HLT_passed = (sub_df["Trigger_HLT_DoubleMu4_3_LowMass_v"]==1)
     dak_HLTmask = HLT_passed
-    dak_HLTpassed = dak.sum(dak_HLTmask&dak_L1mask)  
+    dak_HLTpassed = dak.sum(dak_HLTmask)  
     cutflow_lazy["HLTpassed"] = dak_HLTpassed
     HLTpath = dak.values_astype(1*sub_df["Trigger_HLT_DoubleMu3_TkMu_DsTau3Mu_v"]
             + 10*sub_df["Trigger_HLT_DoubleMu4_3_LowMass_v"]
-            + 100*sub_df["Trigger_HLT_DoubleMu4_LowMass_Displaced_v"], "int64")
+            + 100*sub_df["Trigger_HLT_DoubleMu4_LowMass_Displaced_v"]
+            + 1000*sub_df["Trigger_HLT_DoubleMu3_Trk_Tau3mu"], "int64")
     sub_df["HLTpath"] = HLTpath
-    sub_df = sub_df[dak_L1mask&dak_HLTmask]
+    sub_df = sub_df[dak_HLTmask]
     # --------------------------------------------------------------------------------
     # STEP 1: Associate each muon and track in the triplets with their corresponding objects in the Muon/Track branches
     # --------------------------------------------------------------------------------
@@ -99,6 +153,7 @@ def process_tau3mu_events(sub_df, isMC):
                 sub_df[f"{columns_old[i]}_{mu_idx+1}"] = sub_df[f"{columns_old[i]}"][sub_df[f"Tau3Mu_mu{mu_idx+1}_idx"]]
     # --- Combined Quality Variables (CombinedQuality) ---
     scalar_fields = ['run', 'luminosityBlock', 'event', 'nMuon', 'nTrack', 'nTau3Mu', 'L1seed', 'HLTpath', 'isMC']
+    scalar_fields += L1_bits_saved
     if isMC>0:
         scalar_fields += ["Pileup_nPU"]
     else:
@@ -237,17 +292,17 @@ def process_tau3mu_events(sub_df, isMC):
     dR_good = (sub_df.Tau3Mu_dr12<0.6)&(sub_df.Tau3Mu_dr13<0.6)&(sub_df.Tau3Mu_dr23<0.6)
     dZ_good = (sub_df.Tau3Mu_dz12<2.5)&(sub_df.Tau3Mu_dz13<2.5)&(sub_df.Tau3Mu_dz23<2.5)
     # Vertex significance cut
-    pv_sv_significance_cut = (sub_df.Tau3Mu_flightDistSig >= 3.5)
+    pv_sv_significance_cut = (sub_df.Tau3Mu_flightDistBSSig >= 3.5)  # BS-SV, come dsPhiPi e analyzer 2022-2023
 
     dr_dz_sign = (dR_good&dZ_good&pv_sv_significance_cut)
     tri_muon_mass_cut = ((sub_df.Tau3Mu_mass >= 1.62) & (sub_df.Tau3Mu_mass <= 2.))
 
-    triggerMatch_1 = ((sub_df.Muon_HLT_DoubleMu3_TkMu_DsTau3Mu_v_1 + sub_df.Muon_HLT_DoubleMu3_Trk_Tau3mu_1 + sub_df.Muon_HLT_DoubleMu3_Trk_Tau3mu_NoL1Mass_v_1 + sub_df.Muon_HLT_DoubleMu4_3_LowMass_v_1 + sub_df.Muon_HLT_DoubleMu4_LowMass_Displaced_v_1 > 0)
+    # Trigger matching solo agli oggetti di HLT_DoubleMu4_3_LowMass (path dimuonico): richiesto
+    # su mu1 e mu2 (i due muoni piu' duri, collezione ordinata in pT), come nell'analyzer 2022-2023
+    triggerMatch_1 = ((sub_df.Muon_HLT_DoubleMu4_3_LowMass_v_1 > 0)
                     & (abs(sub_df.Muon_trgDR_1) < 0.03) & (abs(sub_df.Muon_trgDPT_1) < 0.1))
-    triggerMatch_2 = ((sub_df.Muon_HLT_DoubleMu3_TkMu_DsTau3Mu_v_2 + sub_df.Muon_HLT_DoubleMu3_Trk_Tau3mu_2 + sub_df.Muon_HLT_DoubleMu3_Trk_Tau3mu_NoL1Mass_v_2 + sub_df.Muon_HLT_DoubleMu4_3_LowMass_v_2 + sub_df.Muon_HLT_DoubleMu4_LowMass_Displaced_v_2 > 0)
+    triggerMatch_2 = ((sub_df.Muon_HLT_DoubleMu4_3_LowMass_v_2 > 0)
                     & (abs(sub_df.Muon_trgDR_2) < 0.03) & (abs(sub_df.Muon_trgDPT_2) < 0.1))
-    triggerMatch_3 = ((sub_df.Muon_HLT_DoubleMu3_TkMu_DsTau3Mu_v_3 + sub_df.Muon_HLT_DoubleMu3_Trk_Tau3mu_3 + sub_df.Muon_HLT_DoubleMu3_Trk_Tau3mu_NoL1Mass_v_3 + sub_df.Muon_HLT_DoubleMu4_3_LowMass_v_3 + sub_df.Muon_HLT_DoubleMu4_LowMass_Displaced_v_3 > 0)
-                    & (abs(sub_df.Muon_trgDR_3) < 0.03) & (abs(sub_df.Muon_trgDPT_3) < 0.1))
 
     cutflow_lazy["BaseCut"] = dak_base_cuts
     dak_dR_dZ_sign = dak.sum(dak.any(base_cuts&dr_dz_sign, axis=1)) 
@@ -258,11 +313,10 @@ def process_tau3mu_events(sub_df, isMC):
     cutflow_lazy["TriggerMatch1"] = dak_trigger_match1  
     dak_trigger_match2 = dak.sum(dak.any(base_cuts&dr_dz_sign&tri_muon_mass_cut&triggerMatch_1&triggerMatch_2, axis=1))  
     cutflow_lazy["TriggerMatch12"] = dak_trigger_match2
-    dak_trigger_match3 = dak.sum(dak.any(base_cuts&dr_dz_sign&tri_muon_mass_cut&triggerMatch_1&triggerMatch_2&triggerMatch_3, axis=1)) 
-    cutflow_lazy["TriggerMatch123"] = dak_trigger_match3
+    cutflow_lazy["TriggerMatch123"] = dak_trigger_match2  # terzo muone non richiesto (path dimuonico)
     
     for col in selected_fields:
-        sub_df[col] = sub_df[col][base_cuts&dr_dz_sign&tri_muon_mass_cut&triggerMatch_1&triggerMatch_2&triggerMatch_3]
+        sub_df[col] = sub_df[col][base_cuts&dr_dz_sign&tri_muon_mass_cut&triggerMatch_1&triggerMatch_2]
     
     sub_df = sub_df[dak.num(sub_df.Tau3Mu_mass, axis=1) > 0]
     sorted_idx = dak.argsort(sub_df["Tau3Mu_chi2"])
@@ -289,7 +343,6 @@ def Analysis_Tau3Mu(tree, dataset_name, output_path, era, isMC):
             isMC=4
         else:
             isMC = 5  # Could be a flag used downstream in processing logic
-    isMC = 0
 
     # 1. Main logic execution
     arrays, selection_cutflow_dict = process_tau3mu_events(tree, isMC=isMC)

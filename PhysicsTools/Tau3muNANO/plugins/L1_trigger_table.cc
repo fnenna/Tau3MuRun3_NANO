@@ -20,6 +20,7 @@ public:
         doc_(iConfig.getParameter<std::string>("doc")),
         extension_(iConfig.getParameter<bool>("extension")),
         l1Seeds_(iConfig.getParameter<std::vector<std::string>>("l1Seeds")),
+        saveInitial_(iConfig.existsAs<bool>("saveInitial") ? iConfig.getParameter<bool>("saveInitial") : false),
         hltPaths_(iConfig.getParameter<std::vector<std::string>>("hltPaths")) {
         produces<nanoaod::FlatTable>();
     }
@@ -30,9 +31,12 @@ public:
         auto const& menuHandle = iSetup.getHandle(utmToken_);
         const L1TUtmTriggerMenu* menu = menuHandle.isValid() ? menuHandle.product() : nullptr;
 
-        std::vector<bool> l1Decisions;
+        // Final = dopo i prescale (cio' che ha davvero acceso il trigger);
+        // Initial = prima dei prescale (utile per emulare nel MC la stessa logica dei dati)
+        std::vector<bool> l1Decisions, l1DecisionsInitial;
         if (!l1Results.isEmpty(0)) {
             l1Decisions = l1Results.at(0, 0).getAlgoDecisionFinal();
+            l1DecisionsInitial = l1Results.at(0, 0).getAlgoDecisionInitial();
         }
 
         // --- HLT Logic ---
@@ -44,17 +48,21 @@ public:
         tab->setDoc(doc_);
 
         // Fill L1 Seeds
+        // Seed assente dal menu del run -> bit = 0
         for (const auto& seedName : l1Seeds_) {
-            uint8_t pass = 0;
+            uint8_t pass = 0, passInitial = 0;
             if (menu && !l1Decisions.empty()) {
                 auto const& algoMap = menu->getAlgorithmMap();
                 auto it = algoMap.find(seedName);
                 if (it != algoMap.end()) {
                     unsigned int index = it->second.getIndex();
                     if (index < l1Decisions.size()) pass = (l1Decisions[index] ? 1 : 0);
+                    if (index < l1DecisionsInitial.size()) passInitial = (l1DecisionsInitial[index] ? 1 : 0);
                 }
             }
-            tab->addColumnValue<uint8_t>(seedName, pass, "L1 bit: " + seedName);
+            tab->addColumnValue<uint8_t>(seedName, pass, "L1 bit (after prescale): " + seedName);
+            if (saveInitial_)
+                tab->addColumnValue<uint8_t>(seedName + "_initial", passInitial, "L1 bit (before prescale): " + seedName);
         }
 
         // Fill HLT Paths
@@ -88,6 +96,7 @@ private:
     const std::string doc_;
     const bool extension_;
     const std::vector<std::string> l1Seeds_;
+    const bool saveInitial_;
     const std::vector<std::string> hltPaths_;
 };
 

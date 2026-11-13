@@ -73,7 +73,13 @@ public:
                     const pat::Muon &m1 = muons->at(i), &m2 = muons->at(j), &m3 = muons->at(k);
                     if (m1.innerTrack().isNull() || m2.innerTrack().isNull() || m3.innerTrack().isNull()) continue;
                     if (std::abs(m1.charge() + m2.charge() + m3.charge()) != 1) continue;
+                    // Muoni duplicati (stessa traccia in due pat::Muon): stesso controllo di DsPhiPiBuilder
+                    if (reco::deltaR(m1, m2) < 0.01 || reco::deltaR(m1, m3) < 0.01 || reco::deltaR(m2, m3) < 0.01) continue;
+                    if (std::abs(m1.eta() - m2.eta()) < 1e-6 ||
+                        std::abs(m1.eta() - m3.eta()) < 1e-6 ||
+                        std::abs(m2.eta() - m3.eta()) < 1e-6) continue;
                     std::vector<reco::TransientTrack> muTTracks = {ttb.build(m1.innerTrack()), ttb.build(m2.innerTrack()), ttb.build(m3.innerTrack())};
+                    if (!muTTracks[0].isValid() || !muTTracks[1].isValid() || !muTTracks[2].isValid()) continue;
                     KalmanVertexFitter svFitter(true);
                     TransientVertex sv = svFitter.vertex(muTTracks);
                     if (!sv.isValid() || !sv.hasRefittedTracks()){
@@ -260,6 +266,16 @@ public:
 
                     bool isResonance = vetoResonances(evt, ttb, i, j, k, cand);
                     cand.addUserInt("isVetoResonance", isResonance ? 1 : 0);
+
+                    // Risoluzione sulla massa del tripletto (propagazione degli errori su pT), come in DsPhiPiBuilder
+                    cand.addUserFloat("sigma_m", resoTriplMass(
+                        m1.pt(), m1.eta(), m1.phi(),
+                        m2.pt(), m2.eta(), m2.phi(),
+                        m3.pt(), m3.eta(), m3.phi(),
+                        m1.bestTrack()->ptError(),
+                        m2.bestTrack()->ptError(),
+                        m3.bestTrack()->ptError()
+                    ));
                     ret_val->push_back(cand);
                 }
             }
@@ -292,7 +308,38 @@ public:
     }
     }
 
-    bool vetoResonances(edm::Event& evt, const TransientTrackBuilder& ttb, 
+    // Errore sulla massa invariante dei 3 muoni dalla propagazione degli errori su pT
+    // (copiata da DsPhiPiBuilder, con la massa del muone anche per il terzo oggetto)
+    static float resoTriplMass(double pt1, double eta1, double phi1,
+                               double pt2, double eta2, double phi2,
+                               double pt3, double eta3, double phi3,
+                               double dpt1, double dpt2, double dpt3,
+                               double m1 = 0.10566,
+                               double m2 = 0.10566,
+                               double m3 = 0.10566)
+    {
+        auto Efun = [](double pt, double eta, double m) {
+            return std::sqrt(pt*pt * std::cosh(eta)*std::cosh(eta) + m*m);
+        };
+        double E1 = Efun(pt1,eta1,m1), E2 = Efun(pt2,eta2,m2), E3 = Efun(pt3,eta3,m3);
+        double Et  = E1 + E2 + E3;
+        double Pxt = pt1*std::cos(phi1) + pt2*std::cos(phi2) + pt3*std::cos(phi3);
+        double Pyt = pt1*std::sin(phi1) + pt2*std::sin(phi2) + pt3*std::sin(phi3);
+        double Pzt = pt1*std::sinh(eta1) + pt2*std::sinh(eta2) + pt3*std::sinh(eta3);
+        double M   = std::sqrt(std::max(0., Et*Et - Pxt*Pxt - Pyt*Pyt - Pzt*Pzt));
+        if (M <= 0.) return 0.f;
+
+        auto dMdpT = [&](double pt, double eta, double phi, double Ei) {
+            return (Et*(pt*std::cosh(eta)*std::cosh(eta)/Ei)
+                    - Pxt*std::cos(phi) - Pyt*std::sin(phi) - Pzt*std::sinh(eta)) / M;
+        };
+        double d1 = dMdpT(pt1,eta1,phi1,E1);
+        double d2 = dMdpT(pt2,eta2,phi2,E2);
+        double d3 = dMdpT(pt3,eta3,phi3,E3);
+        return static_cast<float>(std::sqrt(d1*d1*dpt1*dpt1 + d2*d2*dpt2*dpt2 + d3*d3*dpt3*dpt3));
+    }
+
+    bool vetoResonances(edm::Event& evt, const TransientTrackBuilder& ttb,
                         const int idx_mu1, const int idx_mu2, const int idx_mu3,
                         pat::CompositeCandidate& cand) const {
         

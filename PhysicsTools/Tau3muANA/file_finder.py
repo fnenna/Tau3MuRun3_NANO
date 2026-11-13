@@ -9,10 +9,10 @@ patterns = {
         False: {"2024": "/path/to/data/signal/2024/{era}/{stream}/*", "2025": "/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass0/SkimTau3mu_2025eraB_stream0_Mini_v4/260717_*/00*/tau3mu_output_Data_*.root"}
     },
     "control": {
-        True:  {"2023":"/lustre/cms/store/user/fnenna/DstoPhiPi_Phito2Mu_MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/SkimDsPhiPi_2023_MC_DsPhiPi_{era}_Mini_v4/260920_*/*/dsphipi_output_MC_*.root", "2024": "/path/to/mc/control/2024/*", "2025": "/lustre/cms/store/user/fnenna/DstoPhiPi-Phito2Mu_Fil-Mu_TuneCP5_13p6TeV_pythia8-evtgen/SkimDsPhiPi_2025_MC_DsPhiPi_Mini_v4/260722_*/00*/dsphipi_output_MC_*.root"},
+        True:  {"2023":"/lustre/cms/store/user/fnenna/DstoPhiPi_Phito2Mu_MuFilter_TuneCP5_13p6TeV_pythia8-evtgen/SkimDsPhiPi_2023_MC_DsPhiPi_{era}_Mini_v4/260920_*/*/dsphipi_output_MC_*.root", "2024": "/lustre/cms/store/user/fnenna/DstoPhiPi-Phito2Mu_Fil-Mu_TuneCP5_13p6TeV_pythia8-evtgen/SkimDsPhiPi_2024_MC_DsPhiPi_Mini_v4/261111_185111/0000/*.root", "2025": "/lustre/cms/store/user/fnenna/DstoPhiPi-Phito2Mu_Fil-Mu_TuneCP5_13p6TeV_pythia8-evtgen/SkimDsPhiPi_2025_MC_DsPhiPi_Mini_v4/260722_*/00*/dsphipi_output_MC_*.root"},
         False: {#"2024": "/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass{stream}/SkimDsPhiPi_2024era{era}_stream{stream}_Mini_v4/260723_*/00*/dsphipi_output_Data_*.root",
                 "2023": "/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass{stream}/SkimDsPhiPi_2023era{era}*_stream{stream}_Mini_v4/260916_*/00*/dsphipi_output_Data_*.root",
-                "2024": "/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass{stream}/SkimDsPhiPi_2024era{era}_stream{stream}_Mini_v4/26*_*/00*/dsphipi_output_Data_*.root",
+                "2024": "/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass{stream}/SkimDsPhiPi_2024era{era}_stream{stream}_Mini_v4/261111_*/00*/dsphipi_output_Data_*.root",
                 "2025": "/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass{stream}/SkimDsPhiPi_2025era{era}_stream{stream}_Mini_v4/260714*/00*/dsphipi_output_Data_*.root"}
     }
 }
@@ -25,6 +25,7 @@ parser.add_argument("--year", type=str, required=True, choices=["2023","2024", "
 parser.add_argument("--type", type=str, required=True, choices=["signal", "control"], help="The type of data to process (signal or control)")
 parser.add_argument("--isMC", action="store_true", help="Flag to indicate if the data is Monte Carlo")
 parser.add_argument("--era", type=str, default=None, help="The specific era to process (optional, e.g., B, C, D...)")
+parser.add_argument("--out-flag", type=str, default=None, help="flag to add at the end fo the -csv file name")
 args = parser.parse_args()
 
 eras_dic = {
@@ -62,11 +63,11 @@ if not args.isMC:
             raw_pattern = patterns[args.type][args.isMC][args.year]
             #da aggiungere solo se stream =5 per l'aggiunta dell'era I (dati da riprocessare meglio forse)
             if stream == 5 and era == "I-v2":
-                pattern = "/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass5/SkimDsPhiPi_2024eraI-v2_stream0_Mini_v4/260904_*/0000/dsphipi_output_Data_*.root"
+                pattern = "/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass5/SkimDsPhiPi_2024eraI-v2_stream0_Mini_v4/261111_*/0000/dsphipi_output_Data_*.root"
             elif stream == 6 and era == "I-v2":
-                pattern = "/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass6/SkimDsPhiPi_2024eraI-v2_stream1_Mini_v4/260904_*/0000/dsphipi_output_Data_*.root"
+                pattern = "/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass6/SkimDsPhiPi_2024eraI-v2_stream1_Mini_v4/261111_*/0000/dsphipi_output_Data_*.root"
             elif stream == 7 and era == "I-v3":
-                pattern = "/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass7/SkimDsPhiPi_2024eraI-v3_stream5_Mini_v4/260904_*/0000/dsphipi_output_Data_*.root"
+                pattern = "/lustre/cms/store/user/fnenna/ParkingDoubleMuonLowMass7/SkimDsPhiPi_2024eraI-v3_stream5_Mini_v4/261111_*/0000/dsphipi_output_Data_*.root"
             else:
                 pattern = raw_pattern.format(era=era, stream=stream)
             files = sorted(glob.glob(pattern))
@@ -154,7 +155,7 @@ df = pd.DataFrame(data_list)
 if args.era:
     output_name = f"filePaths_{args.type}_{'MC' if args.isMC else 'Data'}_{args.year}_era{args.era}.csv"
 else:
-    output_name = f"filePaths_{args.type}_{'MC' if args.isMC else 'Data'}_{args.year}.csv"
+    output_name = f"filePaths_{args.type}_{'MC' if args.isMC else 'Data'}_{args.year}_{args.out_flag}_newWFixes.csv"
 df.to_csv(output_name, index=False)
 
 if not df.empty:

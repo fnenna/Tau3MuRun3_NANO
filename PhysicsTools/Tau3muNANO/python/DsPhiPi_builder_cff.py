@@ -15,14 +15,25 @@ HLT_path_list = cms.vstring(
     )
 
 L1_path_list = cms.vstring(
+            # --- seed di HLT_DoubleMu4_3_LowMass_v (menu 2024, eras C-I) ---
+            "L1_DoubleMu0er1p4_SQ_OS_dR_Max1p4",       # PS 1 sempre
+            "L1_DoubleMu4er2p0_SQ_OS_dR_Max1p6",       # PS 1 sempre
+            "L1_DoubleMu4p5_SQ_OS_dR_Max1p2",          # PS 1 sempre
+            "L1_DoubleMu0er1p5_SQ_OS_dR_Max1p4",       # spento a inizio fill
+            "L1_DoubleMu4_SQ_OS_dR_Max1p2",            # spento a inizio fill
+            "L1_DoubleMu3er2p0_SQ_OS_dR_Max1p6",       # spento a inizio fill
+            "L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p5",     # PS 100, PS 1 a fine fill
+            "L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p6",     # PS 100
+            "L1_DoubleMu0er1p4_SQ_OS_dEta_Max1p2",     # PS 1000
+            "L1_DoubleMu0er1p5_SQ_OS_dEta_Max1p2",     # spento
+            "L1_DoubleMu0er1p4_OQ_OS_dEta_Max1p6",     # spento
+            "L1_DoubleMu5_SQ_OS_dR_Max1p6",            # spento
+            # --- seed aggiuntivi di HLT_DoubleMu3_Trk_Tau3mu_v ---
+            "L1_TripleMu_3SQ_2p5SQ_0_OS_Mass_Max12",
+            "L1_TripleMu_4SQ_2p5SQ_0_OS_Mass_Max12",
             "L1_TripleMu_5SQ_3SQ_0_DoubleMu_5_3_SQ_OS_Mass_Max9",
-            "L1_DoubleMu0er1p4_SQ_OS_dR_Max1p4",
-            "L1_DoubleMu0er1p5_SQ_OS_dR_Max1p4",
-            "L1_DoubleMu4_SQ_OS_dR_Max1p2",
-            "L1_DoubleMu4p5_SQ_OS_dR_Max1p2",
             "L1_TripleMu_5SQ_3SQ_0OQ_DoubleMu_5_3_SQ_OS_Mass_Max9",
-            "L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p6",
-            "L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p5",
+            # --- seed gia' presenti (altri anni) ---
             "L1_TripleMu_2SQ_1p5SQ_0OQ_Mass_Max12",
             "L1_TripleMu_3SQ_2p5SQ_0OQ_Mass_Max12"
         )
@@ -93,7 +104,7 @@ def setupDsPhiPi(process, isMC):
             src = cms.InputTag("prunedGenParticles"),
             select = cms.vstring(
                 "drop *",
-                "keep abs(pdgId)==13 | abs(pdgId)==15 | abs(pdgId)==11 | abs(pdgId)==211 | abs(pdgId)==321 | abs(pdgId)==431 | abs(pdgId)==333 | abs(pdgId)==12 | abs(pdgId)==14 | abs(pdgId)==16 | abs(pdgId)==511 | abs(pdgId)==521"
+                "keep abs(pdgId)==13 | abs(pdgId)==15 | abs(pdgId)==11 | abs(pdgId)==211 | abs(pdgId)==321 | abs(pdgId)==431 | abs(pdgId)==333 | abs(pdgId)==12 | abs(pdgId)==14 | abs(pdgId)==16 | (abs(pdgId)>500 && abs(pdgId)<600) | (abs(pdgId)>5000 && abs(pdgId)<6000)"  # tutti gli adroni B (B0, B+, Bs, Bc, Lb, ...): servono a getGenOrigin per il flag non-prompt
             )
         )
 
@@ -170,6 +181,7 @@ def setupDsPhiPi(process, isMC):
         prob    = Var("userFloat('sv_prob')", float, doc="SV fit probability"),
         chi2    = Var("userFloat('sv_chi2')", float),
         ndof    = Var("userFloat('sv_ndof')", float),
+        massReso = Var("userFloat('sigma_m')", float, doc="Resolution on the invariant mass"),
         
         # Vertex Positions
         sv_x    = Var("userFloat('sv_x')", float),
@@ -378,6 +390,7 @@ def setupDsPhiPi(process, isMC):
         doc = cms.string("L1 and HLT bits for Tau3Mu analysis"),
         extension = cms.bool(False),
         l1Seeds = L1_path_list,
+        saveInitial = cms.bool(True),  # salva anche le decisioni L1 prima dei prescale (*_initial)
         hltPaths = HLT_path_list
     )
 

@@ -13,6 +13,36 @@ vector.register_awkward()
 sys.stderr = open('errors.txt', 'w')
 
 
+# Seed L1 di HLT_DoubleMu4_3_LowMass_v e HLT_DoubleMu3_Trk_Tau3mu_v (menu 2024),
+# devono coincidere con L1_path_list in Tau3muNANO/python/DsPhiPi_builder_cff.py
+L1_SEEDS = [
+    "L1_DoubleMu0er1p4_SQ_OS_dR_Max1p4",
+    "L1_DoubleMu4er2p0_SQ_OS_dR_Max1p6",
+    "L1_DoubleMu4p5_SQ_OS_dR_Max1p2",
+    "L1_DoubleMu0er1p5_SQ_OS_dR_Max1p4",
+    "L1_DoubleMu4_SQ_OS_dR_Max1p2",
+    "L1_DoubleMu3er2p0_SQ_OS_dR_Max1p6",
+    "L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p5",
+    "L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p6",
+    "L1_DoubleMu0er1p4_SQ_OS_dEta_Max1p2",
+    "L1_DoubleMu0er1p5_SQ_OS_dEta_Max1p2",
+    "L1_DoubleMu0er1p4_OQ_OS_dEta_Max1p6",
+    "L1_DoubleMu5_SQ_OS_dR_Max1p6",
+    "L1_TripleMu_3SQ_2p5SQ_0_OS_Mass_Max12",
+    "L1_TripleMu_4SQ_2p5SQ_0_OS_Mass_Max12",
+    "L1_TripleMu_5SQ_3SQ_0_DoubleMu_5_3_SQ_OS_Mass_Max9",
+    "L1_TripleMu_5SQ_3SQ_0OQ_DoubleMu_5_3_SQ_OS_Mass_Max9",
+    "L1_TripleMu_2SQ_1p5SQ_0OQ_Mass_Max12",
+    "L1_TripleMu_3SQ_2p5SQ_0OQ_Mass_Max12",
+]
+# Seed con prescale 1 in tutte le colonne (brilcalc, run 380115-386924)
+L1_UNPRESCALED_LOWMASS = [
+    "L1_DoubleMu0er1p4_SQ_OS_dR_Max1p4",
+    "L1_DoubleMu4er2p0_SQ_OS_dR_Max1p6",
+    "L1_DoubleMu4p5_SQ_OS_dR_Max1p2",
+]
+
+
 def DimuonMass(sub_df, first=1, second=2):
     # "lazy" quadrivectors
     mu1 = ak.zip({
@@ -73,6 +103,22 @@ def process_dsphipi_events(sub_df, isMC):
             + 100*sub_df["Trigger_L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p6"]
             + 1000*ak.values_astype(sub_df["Trigger_L1_TripleMu_2SQ_1p5SQ_0OQ_Mass_Max12"], "int64"))
     sub_df["L1seed"] = L1seed
+
+    # Singoli bit L1 (dopo prescale) e, se presenti, *_initial (prima dei prescale).
+    # I seed assenti nel ntuple di input (produzioni vecchie) vengono saltati.
+    input_fields = set(dak.fields(sub_df))
+    L1_bits_saved = [f"Trigger_{s}{suf}" for s in L1_SEEDS for suf in ("", "_initial")
+                     if f"Trigger_{s}{suf}" in input_fields]
+    # OR dei seed di HLT_DoubleMu4_3_LowMass mai prescalati nel 2024 (eras C-I):
+    # da usare come selezione L1 comune a dati e MC
+    for suf in ("", "_initial"):
+        names = [f"Trigger_{s}{suf}" for s in L1_UNPRESCALED_LOWMASS]
+        if all(n in input_fields for n in names):
+            unpresc = sub_df[names[0]] == 1
+            for n in names[1:]:
+                unpresc = unpresc | (sub_df[n] == 1)
+            sub_df[f"L1_unprescaled{suf}"] = dak.values_astype(unpresc, "int64")
+            L1_bits_saved.append(f"L1_unprescaled{suf}")
     
     # Check HLT
     HLT_passed = (sub_df["Trigger_HLT_DoubleMu4_3_LowMass_v"]==1)
@@ -99,6 +145,7 @@ def process_dsphipi_events(sub_df, isMC):
             
     # --- Combined Quality Variables (CombinedQuality) ---
     scalar_fields = ['run', 'luminosityBlock', 'event', 'nMuon', 'nTrack', 'nCand2MuTrk', 'L1seed', 'HLTpath', 'isMC']
+    scalar_fields += L1_bits_saved
     if isMC>0:
         scalar_fields += ["Pileup_nPU"]
     else:
@@ -176,15 +223,14 @@ def process_dsphipi_events(sub_df, isMC):
     muon2_acceptance_barrel = ((abs(sub_df.Muon_eta_2) <= 1.2) & (sub_df.Muon_pt_2 > 3.5))
     muon1_acceptance_endcap = (((abs(sub_df.Muon_eta_1) > 1.2) & (abs(sub_df.Muon_eta_1) < 2.4)) & (sub_df.Muon_pt_1 > 2.0))
     muon2_acceptance_endcap = (((abs(sub_df.Muon_eta_2) > 1.2) & (abs(sub_df.Muon_eta_2) < 2.4)) & (sub_df.Muon_pt_2 > 2.0))
-    #track_acceptance_barrel = ((abs(sub_df.Track_eta_tr) <= 1.2) & (sub_df.Track_pt_tr > 3.5))
-    #track_acceptance_endcap = (((abs(sub_df.Track_eta_tr) > 1.2) & (abs(sub_df.Track_eta_tr) < 2.4)) & (sub_df.Track_pt_tr > 2.0))
-    track_acceptance = sub_df.Track_pt_tr > 2.0
+    track_acceptance_barrel = ((abs(sub_df.Track_eta_tr) <= 1.2) & (sub_df.Track_pt_tr > 3.5))
+    track_acceptance_endcap = (((abs(sub_df.Track_eta_tr) > 1.2) & (abs(sub_df.Track_eta_tr) < 2.4)) & (sub_df.Track_pt_tr > 2.0))
     muon_acceptance = (
         (muon1_acceptance_barrel | muon1_acceptance_endcap) &
         (muon2_acceptance_barrel | muon2_acceptance_endcap)
     )
 
-    #track_acceptance = (track_acceptance_barrel | track_acceptance_endcap)
+    track_acceptance = (track_acceptance_barrel | track_acceptance_endcap)
     acceptance = muon_acceptance & track_acceptance
 
     # Vertex significance cut
